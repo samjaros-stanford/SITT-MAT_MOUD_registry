@@ -1,0 +1,3 @@
+This file is a placeholder for Github.
+
+The raw_data folder should be added to .gitignore to prevent private information from being uploaded.
