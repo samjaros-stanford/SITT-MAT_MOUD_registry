@@ -1,6 +1,6 @@
-::: {align="center"}
-<a href="https://github.com/samjaros-stanford/SITT-MAT"> <img src="arch/SITT-MAT-logo.jpg" alt="SITT-MAT Project Logo" width="80" height="80"/> </a>
-:::
+<div align="center">
+<a href="https://github.com/samjaros-stanford/SITT-MAT"> <img src="arch/SITT-MAT_logo.jpg" alt="SITT-MAT Project Logo" width="80" height="80"/> </a>
+</div>
 
 # SITT-MAT
 
