@@ -3,7 +3,7 @@
 # Outputs: Long form of RE-AIM & IMAT outcomes to input into EMF google sheet
 #
 # Author: Sam Jaros (samjaros@stanford.edu)
-# Date: November 2022
+# Date: February 2023
 ########################
 
 # Required packages
