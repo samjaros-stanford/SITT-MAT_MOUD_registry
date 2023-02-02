@@ -50,7 +50,7 @@ cdi_scoring = tribble(
   "cdi_inner_15", "cdi_6fea",  T
 )
 # Output
-output_file = paste0("data/0_CDI_",gsub("-","",as.character(today())),".csv") # Path to output .csv
+output_file = paste0("data/CDI_",gsub("-","",as.character(today())),".csv") # Path to output .csv
 ### End of options
 
 raw_cdi = rbind(data.frame(read.csv(sud_cdi_file), type="SUD"), 
