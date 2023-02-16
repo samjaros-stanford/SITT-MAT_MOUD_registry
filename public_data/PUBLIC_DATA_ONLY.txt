@@ -1,0 +1,1 @@
+This folder is for publicly available data. For example, put data for published figures here.
