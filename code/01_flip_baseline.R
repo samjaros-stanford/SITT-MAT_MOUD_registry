@@ -95,5 +95,5 @@ imat_data = long_imat %>%
 
 reaim_imat = rbind(reaim_data, imat_data)
 write.csv(reaim_imat, file=output_file, row.names=F)
-saveRDS(reaim_imat, file="data/current_reaim-imat.rds")
+saveRDS(reaim_imat, file="data/current_baseline_reaim-imat.rds")
 
