@@ -1,6 +1,6 @@
-<div align="center">
+::: {align="center"}
 <a href="https://github.com/samjaros-stanford/SITT-MAT"> <img src="arch/SITT-MAT_logo.jpeg" alt="SITT-MAT Project Logo" width="80" height="80"/> </a>
-</div>
+:::
 
 # SITT-MAT
 
@@ -27,7 +27,9 @@ This repository contains the files required to run the analysis for the SITT-MAT
 
 Maintaining patient and participant privacy is of primary importance for this project. For this reason, the `data` and `raw_data` folders have already been added to `.gitignore` so they will not be uploaded to Github. You will need to download the data from the source using your credentials and run the analyses to be able to see the data.
 
-## Folders
+## Organization
+
+### Folders
 
 **arch** - Contains abandoned code and other static files
 
@@ -38,3 +40,13 @@ Maintaining patient and participant privacy is of primary importance for this pr
 **figures** - Contains all image files and tables for figures
 
 **raw_data** - Empty folder for raw input data
+
+### Code Naming
+
+`00-09` - Intake & process raw data
+
+`10-19` - Create data products
+
+`20-29` - Analyses
+
+`30-39` - Visualizations

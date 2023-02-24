@@ -22,7 +22,7 @@ sud_reaim_file = paste0("raw_data/REAIM_", today_string, "_SUD.csv") # Path to R
 pc_imat_file = paste0("raw_data/IMAT_", today_string, "_PC.csv") # Path to REDCap report in .csv
 sud_imat_file = paste0("raw_data/IMAT_", today_string, "_SUD.csv") # Path to REDCap report in .csv
 # Output
-output_file = paste0("data/reaim_imat_", today_string, ".csv") # Path to output .csv
+output_file = paste0("data/baseline_EMF_", today_string, ".csv") # Path to output .csv
 ### End of options
 
 ##########
