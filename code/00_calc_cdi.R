@@ -22,7 +22,7 @@ dna = 0 #0 makes neutral, NA makes it missing
 # Cutoff for neutral
 neutral_cutoff = 0
 # Assemble scoring scheme
-cdi_scoring = read.csv("public_data/cdi_scoring.csv")
+cdi_scoring = read.csv("public_data/cdi_scoring.csv", colClasses=c("q_num"="character"))
 # Output
 output_file = paste0("data/CDI_",gsub("-","",as.character(today())),".csv") # Path to output .csv
 ### End of options
