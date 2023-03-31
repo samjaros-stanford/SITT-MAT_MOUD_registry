@@ -13,7 +13,7 @@ require(stringr)
 
 ### Options
 # Today string
-today_string = gsub("-","",as.character(today()))
+today_string = "20230216"#gsub("-","",as.character(today()))
 # CDI Survey
 pc_cdi_file = paste0("raw_data/CDI_", today_string, "_PC.csv") # Path to REDCap report in .csv
 sud_cdi_file = paste0("raw_data/CDI_", today_string, "_SUD.csv") # Path to REDCap report in .csv
@@ -22,33 +22,7 @@ dna = 0 #0 makes neutral, NA makes it missing
 # Cutoff for neutral
 neutral_cutoff = 0
 # Assemble scoring scheme
-cdi_scoring = tribble(
-  ~item,          ~subscale,  ~isReverse,
-  "cdi_outer_1",  "cdi_1eep",  F,              "cdi_staff_1",   "cdi_5spm", F,
-  "cdi_outer_2",  "cdi_1eep",  F,              "cdi_staff_2",   "cdi_5spm", F,
-  "cdi_outer_3",  "cdi_2cs",   F,              "cdi_staff_3",   "cdi_6fea", F,
-  "cdi_outer_4",  "cdi_2cs",   F,              "cdi_staff_4",   "cdi_6fea", F,
-  "cdi_outer_5",  "cdi_4he",   F,              "cdi_staff_5",   "cdi_6fea", F,
-  "cdi_outer_6",  "cdi_1eep",  F,              "cdi_staff_6",   "cdi_7rtc", F,
-  "cdi_outer_7",  "cdi_1eep",  F,              "cdi_staff_7",   "cdi_7rtc", F,
-  "cdi_outer_8",  "cdi_2cs",   F,              "cdi_staff_8",   "cdi_8ic",  F,
-  "cdi_outer_9",  "cdi_5spm",  F,              "cdi_staff_9",   "cdi_8ic",  F,
-  "cdi_inner_1",  "cdi_3ls",   F,              "cdi_staff_10",  "cdi_8ic",  F,
-  "cdi_inner_2",  "cdi_3ls",   F,              "cdi_staff_11",  "cdi_8ic",  F,
-  "cdi_inner_3",  "cdi_3ls",   F,              "cdi_staff_12",  "cdi_4he",  F,
-  "cdi_inner_4",  "cdi_3ls",   F,              "cdi_patient_1", "cdi_4he",  F,
-  "cdi_inner_5",  "cdi_3ls",   F,              "cdi_patient_2", "cdi_5spm", F,
-  "cdi_inner_6",  "cdi_6fea",  F,              "cdi_patient_3", "cdi_5spm", F,
-  "cdi_inner_7",  "cdi_6fea",  F,              "cdi_patient_4", "cdi_5spm", T,
-  "cdi_inner_8",  "cdi_7rtc",  F,              "cdi_patient_5", "cdi_4he",  F,
-  "cdi_inner_9",  "cdi_4he",   F,              "cdi_patient_6", "cdi_8ic",  F,
-  "cdi_inner_10", "cdi_6fea",  F,
-  "cdi_inner_11", "cdi_6fea",  F,
-  "cdi_inner_12", "cdi_6fea",  T,
-  "cdi_inner_13", "cdi_6fea",  F,
-  "cdi_inner_14", "cdi_4he",   F,
-  "cdi_inner_15", "cdi_6fea",  T
-)
+cdi_scoring = read.csv("public_data/cdi_scoring.csv")
 # Output
 output_file = paste0("data/CDI_",gsub("-","",as.character(today())),".csv") # Path to output .csv
 ### End of options
