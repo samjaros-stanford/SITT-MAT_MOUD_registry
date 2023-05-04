@@ -1,5 +1,7 @@
 library(gt)
+library(stringr)
 library(tidyverse)
+library(webshot2)
 
 ############
 # Settings #
@@ -20,7 +22,23 @@ cdi = readRDS(cdi_long_file) %>%
   # Rescale for purposes of the table
   mutate(scaled_value = if_else(value==8, dna, scaled_value + 4)) %>%
   # Get levels column
-  mutate(level = sapply(strsplit(item, "_"), "[", 2)) 
+  mutate(level = sapply(strsplit(item, "_"), "[", 2))
+
+# Rows are questions, columns are mean value & site type
+question_value = cdi %>%
+  # Get mean Likert for each question/type combination but keep subscale around
+  group_by(type, subscale, q_num) %>%
+  summarize(mean_v = mean(scaled_value, na.rm=T),
+            .groups="keep") %>%
+  ungroup() %>%
+  # Get copies of columns for SUD/PC
+  pivot_wider(names_from = type,
+              names_glue = "{type}_mean_v",
+              values_from = mean_v) %>%
+  # Join in "all" data
+  left_join(cdi %>% group_by(q_num) %>%
+              summarize(all_mean_v = mean(scaled_value, na.rm=T), .groups = "keep"),
+            by="q_num")
 
 # Rows are question subgroups, columns are combinations of mean value & site type
 subscale_value = cdi %>%
@@ -95,7 +113,7 @@ subscale_bf_data = cdi_bf %>%
 subscale_bf = subscale_bf_data %>%
   # Get mean percent for each subscale/type combination
   group_by(type, subscale) %>%
-  summarize(across(.fns=mean),
+  summarize(across(.cols=everything(), .fns=mean),
             .groups = "keep") %>%
   # Get site types across columns
   pivot_wider(names_from = type,
@@ -103,7 +121,7 @@ subscale_bf = subscale_bf_data %>%
               values_from = contains("percent")) %>%
   # Add in "all" site type columns
   left_join(subscale_bf_data %>% select(-type) %>% group_by(subscale) %>%
-              summarize(across(.fns=mean, .names = "all_{.col}"),
+              summarize(across(.cols=everything(), .fns=mean, .names = "all_{.col}"),
                         .groups = "keep"),
             by="subscale")
 
@@ -136,7 +154,7 @@ level_bf = level_bf_data %>%
               values_from = contains("percent")) %>%
   # Add in "all" site type columns
   left_join(level_bf_data %>% select(-type) %>% group_by(level) %>%
-              summarize(across(.fns=mean, .names = "all_{.col}"),
+              summarize(across(.cols=everything(), .fns=mean, .names="all_{.col}"),
                         .groups = "keep"),
             by="level")
 
@@ -152,7 +170,7 @@ total_bf = level_bf_data %>%
               values_from = contains("percent")) %>%
   # Add in "all" site type columns
   cbind(level_bf_data %>% select(-type, -level) %>% group_by() %>%
-          summarize(across(.fns=mean, .names = "all_{.col}"),
+          summarize(across(.cols=everything(), .fns=mean, .names = "all_{.col}"),
                     .groups = "keep"))
   
   
@@ -199,6 +217,35 @@ formatted_columns = list(
   all_facilitators_percent = "% Facilitators"
 )
 
+### Question table
+question_value %>%
+  mutate(q_num = str_pad(as.character(q_num), 2, "left", "0")) %>%
+  rbind(mutate(subscale_value, q_num="Subgroup Mean")) %>%
+  left_join(formatted_names, by=c("subscale"="var_name")) %>%
+  arrange(subscale, q_num) %>%
+  select(-subscale) %>%
+  gt(rowname_col = "q_num",
+     groupname_col = "fmt_name") %>%
+  cols_move(columns = c(PC_mean_v, all_mean_v),
+            after = SUD_mean_v) %>%
+  tab_spanner(label = md(paste0("**SUD Programs (n=", SUD_n, ")**")),
+              id = "sud_programs",
+              columns = starts_with("SUD")) %>%
+  tab_spanner(label = md(paste0("**Primary Care Clinics (n=", PC_n, ")**")),
+              id = "pc_programs",
+              columns = starts_with("PC")) %>%
+  tab_spanner(label = md(paste0("**All Sites (n=", all_n, ")**")),
+              id = "all_programs",
+              columns = starts_with("all")) %>%
+  cols_label(PC_mean_v = "Mean Likert Score",
+             SUD_mean_v = "Mean Likert Score",
+             all_mean_v = "Mean Likert Score") %>%
+  tab_stubhead("Question Number") %>%
+  fmt_number(ends_with("_mean_v")) %>%
+  fmt_percent(ends_with("_percent")) %>%
+  cols_width(~px(215)) %>%
+  gtsave("figures/question_cdi_table.html")
+  
 
 ### Subscale table
 left_join(subscale_value, subscale_bf, by="subscale") %>%
