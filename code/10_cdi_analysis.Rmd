@@ -1,0 +1,156 @@
+---
+title: "CDI Analysis"
+output: html_notebook
+author: "Sam Jaros (samjaros@stanford.edu)"
+---
+
+```{r setup}
+# Package install
+require(lme4)
+require(lmerTest)
+require(stringr)
+require(tidyverse)
+
+############
+# Settings # 
+############
+dna = NA #0 makes neutral, NA makes it missing
+collapse_53_to_62 = F #Should sites 53-62 be combined and reassigned to 89?
+
+########
+# Data #
+########
+
+### CDI
+long_cdi = readRDS(here::here("data/current_long_cdi.rds")) %>%
+  mutate(scaled_value=if_else(value==8,dna,value)) %>%
+  select(program_id, type, date, q_num, subscale, item, scaled_value) %>%
+  # Include site group information
+  mutate(site_group = if_else(program_id %in% paste0("id", 53:62), "PCHS", program_id))
+
+# Collapses sites 53-62 into one group
+if(collapse_53_to_62){
+  cdi_subset = long_cdi %>%
+    filter(program_id %in% paste0("id", 53:62)) %>%
+    group_by(item, q_num, subscale, date) %>%
+    summarize(scaled_value = mean(scaled_value, na.rm=T),
+              .groups = "keep") %>%
+    mutate(program_id = "id89",
+           type = "PC")
+  
+  long_cdi = long_cdi %>%
+    filter(!(program_id %in% paste0("id", 53:62))) %>%
+    rbind(cdi_subset)
+}
+
+# Subscale mean by site
+site_subscale_cdi = long_cdi %>%
+  group_by(program_id, type, site_group, subscale) %>%
+  summarize(subscale_val = mean(scaled_value, na.rm=T),
+            .groups="keep") %>%
+  ungroup()
+
+# Total mean by site
+site_total_cdi = long_cdi %>%
+  group_by(program_id, type, site_group) %>%
+  summarize(total_val = mean(scaled_value, na.rm=T),
+            .groups="keep") %>%
+  ungroup()
+
+### REAIM
+
+
+
+### IMAT
+```
+
+
+# Testing for difference between site types
+
+
+```{r by_question}
+# Get mean & sd for each question for all sites
+total_question = long_cdi %>%
+  group_by(q_num) %>%
+  summarize(total_mean=mean(scaled_value, na.rm=T), 
+            total_sd=sd(scaled_value, na.rm=T),
+            total_median=median(scaled_value, na.rm=T),
+            total_min=min(scaled_value, na.rm=T),
+            total_max=max(scaled_value, na.rm=T)) %>%
+  select(q_num, starts_with("total_"))
+# Get mean & sd for each question for each site type
+type_question = long_cdi %>%
+  group_by(q_num, type) %>%
+  summarize(mean=mean(scaled_value, na.rm=T), 
+            sd=sd(scaled_value, na.rm=T),
+            median=median(scaled_value, na.rm=T),
+            min=min(scaled_value, na.rm=T),
+            max=max(scaled_value, na.rm=T),
+            .groups="keep") %>%
+  pivot_wider(id_cols=q_num,
+              names_from=type,
+              names_glue="{type}_{.value}",
+              values_from=-one_of("q_num", "type"))
+# Function to get mixed effects model p-value
+mxd_effects_pval = function(input_data){
+  coef(summary(lmer(scaled_value~type+(1|site_group), data=input_data)))[10]
+}
+# Get wilcox p-value for each question on difference between PC & SUD
+pval_question = long_cdi %>%
+  nest_by(q_num) %>%
+  summarize(p_val = suppressWarnings(mxd_effects_pval(data)),
+            .groups="keep")
+# Combined CDI summary table by question
+question_summary = left_join(total_question, left_join(type_question, pval_question)) %>%
+  select(q_num, starts_with("total_"), starts_with("PC_"), starts_with("SUD_"), p_val)
+write.csv(question_summary, "data/cdi_question_summary.csv", row.names=F)
+
+```
+
+```{r by_subscale}
+# Get mean & sd for each subscale for all sites
+total_subscale = site_subscale_cdi
+  group_by(subscale) %>%
+  summarize(total_mean=mean(subscale_val, na.rm=T), 
+            total_sd=sd(subscale_val, na.rm=T),
+            total_median=median(subscale_val, na.rm=T),
+            total_min=min(subscale_val, na.rm=T),
+            total_max=max(subscale_val, na.rm=T),
+            .groups="keep") %>%
+  select(subscale, starts_with("total_"))
+# Get mean & sd for each subscale for each site type
+type_subscale = site_subscale_cdi %>%
+  group_by(subscale, type) %>%
+  summarize(mean=mean(subscale_val, na.rm=T), 
+            sd=sd(subscale_val, na.rm=T),
+            median=median(subscale_val, na.rm=T),
+            min=min(subscale_val, na.rm=T),
+            max=max(subscale_val, na.rm=T),
+            .groups="keep") %>%
+  pivot_wider(id_cols=subscale,
+              names_from=type,
+              names_glue="{type}_{.value}",
+              values_from=-one_of("subscale", "type"))
+# Function to get mixed effects model p-value
+mxd_effects_pval = function(input_data){
+  coef(summary(lmer(subscale_val~type+(1|site_group), data=input_data)))[10]
+}
+# Get wilcox p-value for each subscale on difference between PC & SUD
+pval_subscale = site_subscale_cdi %>%
+  nest_by(subscale) %>%
+  summarize(p_val = suppressWarnings(mxd_effects_pval(data)),
+            .groups="keep") %>%
+  mutate(p_val = round(p_val, 4))
+# Combined CDI summary table by subscale
+subscale_summary = left_join(total_subscale, left_join(type_subscale, pval_subscale)) %>%
+  select(subscale, starts_with("total_"), starts_with("PC_"), starts_with("SUD_"), p_val)
+write.csv(subscale_summary, "data/cdi_subscale_summary.csv", row.names=F)
+```
+
+
+# Testing for association with Reach/IMAT
+
+
+```{r total}
+
+```
