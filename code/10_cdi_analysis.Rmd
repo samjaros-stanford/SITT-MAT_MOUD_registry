@@ -6,8 +6,11 @@ author: "Sam Jaros (samjaros@stanford.edu)"
 
 ```{r setup}
 # Package install
+require(fmsb)
+require(ggplot2)
 require(lme4)
 require(lmerTest)
+require(lubridate)
 require(stringr)
 require(tidyverse)
 
@@ -36,7 +39,8 @@ if(collapse_53_to_62){
     summarize(scaled_value = mean(scaled_value, na.rm=T),
               .groups = "keep") %>%
     mutate(program_id = "id89",
-           type = "PC")
+           type = "PC",
+           site_group= "PC_group1")
   
   long_cdi = long_cdi %>%
     filter(!(program_id %in% paste0("id", 53:62))) %>%
@@ -59,9 +63,17 @@ site_total_cdi = long_cdi %>%
 
 ### REAIM
 
+# reaim = readRDS(here::here("data/current_reaim.rds")) %>%
+reaim = readRDS(here::here("data/current_baseline_reaim-imat.rds")) %>%
+  rename(reaim_var = variable,
+         reaim_val = value)
 
 
 ### IMAT
+
+imat = readRDS(here::here("data/current_imat.rds")) %>%
+  rename(imat_var = variable,
+         imat_val = value)
 ```
 
 
@@ -150,7 +162,58 @@ write.csv(subscale_summary, "data/cdi_subscale_summary.csv", row.names=F)
 
 # Testing for association with Reach/IMAT
 
+Note, I used Spearman correlation because I'm doubtful that the relationship will be linear. Spearman tests whether the relationship is monotonically positive (1) or negative (-1).
 
-```{r total}
+Test for Spearman (rank) correlation between each CDI subscale and percent OUD patients on MOUD
 
+```{r cdi_vs_reach}
+subscale_reach = rbind(site_subscale_cdi, 
+                       site_total_cdi %>% mutate(subscale="total") %>% 
+                         rename(subscale_val=total_val)) %>%
+  left_join(reaim %>% filter(date == ymd("2022-08-01"),
+                             reaim_var == "reaim_b4p"))
+subscale_reach %>%
+  nest_by(subscale) %>%
+  summarize(cor=cor(data$subscale_val, data$reaim_val, method="spearman", use="pairwise.complete.obs"),
+            p_val=cor.test(data$subscale_val, data$reaim_val, method="spearman", use="pairwise.complete.obs")$p.value)
+```
+
+Test of Spearman correlation between total CDI and total IMAT
+
+```{r cdi_vs_imat}
+total_imat = site_total_cdi %>%
+  left_join(imat %>% filter(imat_var == "imat_total"))
+cor.test(total_imat$total_val, total_imat$imat_val, method="spearman", use="pairwise.complete.obs")
+```
+
+```{r cdi_viz}
+plot_data = site_subscale_cdi %>% 
+  drop_na(subscale_val) %>%
+  rbind(site_total_cdi %>%
+          mutate(subscale="total") %>%
+          rename(subscale_val = total_val))
+  
+subscale_labels = c("cdi_1eep" = "Enabiling\nExternal\nPolicies", 
+                    "cdi_2cs"  = "Community\nSupport",
+                    "cdi_3ls"  = "Leadership\nSupport",
+                    "cdi_4he"  = "Health\nEquity",
+                    "cdi_5spm" = "Staff Perception\nof MOUD",
+                    "cdi_6fea" = "Feasibility", 
+                    "cdi_7rtc" = "Readiness\nto Change",
+                    "cdi_8ic"  = "Individualized\nCare",
+                    "total"    = "Total")
+
+boxplot_cdi = ggplot(plot_data, 
+                     aes(x=subscale, y=subscale_val, label=program_id)) +
+  geom_violin(color="black", fill=NA) +
+  geom_jitter(aes(shape=type, color=type), width=0.1, alpha=0.4, size=3) +
+  #geom_text() + #Shows ID numbers on plot
+  scale_x_discrete("", labels=subscale_labels, position="top") +
+  scale_y_continuous("Likert value", limits=c(1,7.1), breaks=1:7) +
+  theme_minimal() +
+  theme(legend.title=element_blank())
+boxplot_cdi
+
+ggsave(here::here("figures/point_boxplot_cdi.png"), boxplot_cdi,
+       width=10, height=5)
 ```
