@@ -5,3 +5,5 @@
 
 data/
 raw_data/
+
+*.nb.html
