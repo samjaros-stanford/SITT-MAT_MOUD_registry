@@ -1,0 +1,81 @@
+---
+title: "Community Factors in MOUD Sites"
+author: "Sam Jaros"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup}
+# Package install
+require(lubridate)
+require(tidyverse)
+
+
+# Settings
+dna = NA #0 makes neutral, NA makes it missing
+survey_date = ymd("2022-09-01")
+
+# Data loading
+site_info = readRDS(here::here("data/program_info.rds"))
+
+cdi_questions_of_interest = paste0("0",3:8)
+cdi = readRDS(here::here("data/current_long_cdi.rds")) %>%
+  filter(date==survey_date) %>%
+  filter(q_num %in% cdi_questions_of_interest) %>%
+  mutate(scaled_value=if_else(value==8,dna,value)) %>%
+  pivot_wider(id_cols = c(program_id, date),
+              names_from = q_num,
+              names_prefix = "cdi_",
+              values_from = scaled_value)
+
+imat = readRDS(here::here("data/current_imat_item.rds")) %>%
+  filter(date==survey_date, variable=="imat_d5_6") %>%
+  pivot_wider(id_cols = c(program_id, date),
+              names_from = variable,
+              values_from = value)
+
+program_info = readRDS(here::here("data/program_info.rds"))
+
+study_data = left_join(cdi, imat, by=c("program_id", "date")) %>%
+  left_join(program_info, by="program_id")
+```
+
+# Summary Stats
+
+```{r summary_stats}
+summary(study_data)
+
+# Get mean question scores
+study_data %>%
+  summarize(across(cdi_03:imat_d5_6, ~mean(.x, na.rm=T)))
+
+# Get SDs of question scores
+study_data %>%
+  summarize(across(cdi_03:imat_d5_6, ~sd(.x, na.rm=T)))
+```
+
+# Chronbach Alpha
+
+```{r chron_alpha}
+require(ltm)
+c_alpha = cronbach.alpha(study_data %>% 
+                           dplyr::select(cdi_03:imat_d5_6) %>% 
+                           drop_na())
+c_alpha
+
+# Remove MASS package to avoid conflicts with dplyr
+detach("package:ltm", unload=T)
+detach("package:MASS", unload=T)
+```
+
+# Principal components analysis
+
+```{r regression}
+pc_analysis = prcomp(study_data %>%
+         select(starts_with("cdi_"), starts_with("imat_")) %>%
+         drop_na(), 
+       scale.=T)
+summary(pc_analysis)
+pc_analysis$rotation
+```
+
