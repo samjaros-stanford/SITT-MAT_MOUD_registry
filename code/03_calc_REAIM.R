@@ -6,9 +6,9 @@ library(tidyverse)
 # Settings #
 ############
 # SUD Patient registry
-SUD_registry_file = "raw_data/Registry_20230201_SUD.csv"
+SUD_registry_file = "raw_data/Registry_20230223_SUD.csv"
 # PC Patient registry
-PC_registry_file = "raw_data/Registry_20230201_PC.csv"
+PC_registry_file = "raw_data/Registry_20230223_PC.csv"
 
 ####################
 # Load & Prep Data #
@@ -27,7 +27,7 @@ input_cleanup = function(file_name, type){
     # Only want complete surveys
     filter(quarterly_moud_service_registry_complete==2) %>%
     # Force blanks to be NA's
-    mutate(across(starts_with("pr_"), na_if, "")) 
+    mutate(across(where(is.character), na_if, "")) 
 }
 
 raw_data = rbind(input_cleanup(SUD_registry_file, "SUD"),
@@ -74,4 +74,29 @@ A2 = provider_data %>%
   group_by(program_id, month) %>%
   summarise(A2 = n(),
             .groups = "keep")
+
+##################
+# Reach Measures #
+##################
+
+patient_data = raw_data %>%
+  select(-starts_with("pr_moud_prescriber")) %>%
+  # Remove rows that do not contain a patient report
+  filter(!is.na(pr_id))
+
+
+#################
+# Assemble Data #
+#################
+
+### TEMP ###
+REAIM = read.csv("raw_data/MANUAL_SITT-MAT_Quarterly Data Reports - Completed Manuals.csv") %>%
+  mutate(date = fast_strptime(date, "%b-%y"),
+         value=as.numeric(final.value)) %>%
+  select(date, program_id, variable, value, type)
+### /TEMP ###
+
+saveRDS(REAIM, "data/current_reaim.rds")
+
+
 
