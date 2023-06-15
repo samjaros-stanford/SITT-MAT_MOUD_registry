@@ -1,11 +1,24 @@
 library(lubridate)
 library(tidyverse)
 
+############
+# Settings #
+############
+# IMAT all items
+#   Get these files from REDCap and put them in the raw_data folder
+#     In REDCap, this is "IMAT - All Items" under "Reports" in the sidebar
+#     Click on "Export Data" > "CSV/Microsoft Excel (raw data)" > "Export Data" > File icon
+#   Change the file name to match format IMAT-all_[YYYYMMDD]_[PC|SUD].csv using the current date and the site type
+#   Change the date in the string on the lines below
+pc_imat_file = paste0("raw_data/IMAT-all_20230613_PC.csv") # Path to REDCap report in .csv
+sud_imat_file = paste0("raw_data/IMAT-all_20230613_SUD.csv") # Path to REDCap report in .csv
+
+
 ##########
 # Import #
 ##########
-raw_imat = read.csv(here::here("raw_data/IMAT-all_20230613_SUD.csv")) %>%
-  bind_rows(read.csv(here::here("raw_data/IMAT-all_20230613_PC.csv"))) %>%
+raw_imat = read.csv(pc_imat_file) %>%
+  bind_rows(read.csv(sud_imat_file)) %>%
   # Get survey date from redcap event
   mutate(date = my(substr(redcap_event_name, 1, 8))) %>%
   # Select only desired columns (no comment columns)
@@ -16,20 +29,15 @@ raw_imat = read.csv(here::here("raw_data/IMAT-all_20230613_SUD.csv")) %>%
 #############
 # All items #
 #############
-
 item_imat = raw_imat %>%
   select(-ends_with("_mean")) %>%
   pivot_longer(-c(program_id, date),
                names_to="variable",
                values_to="value")
 
-saveRDS(item_imat, "data/current_imat_item.rds")
-
 #############
 # Subscales #
 #############
-
-# Flip to longer form
 subscale_imat = raw_imat %>%
   select(date, program_id, ends_with("_mean")) %>%
   pivot_longer(ends_with("_mean"),
@@ -37,5 +45,9 @@ subscale_imat = raw_imat %>%
                names_to="variable",
                values_to="value")
 
+##########
+# Export #
+##########
+saveRDS(item_imat, "data/current_imat_item.rds")
 saveRDS(subscale_imat, "data/current_imat_subscale.rds")
 
