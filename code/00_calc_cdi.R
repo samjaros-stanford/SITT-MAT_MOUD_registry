@@ -1,9 +1,6 @@
 ########################
 # Accepts: REDCap CDI survey results
 # Outputs: CDI scores to input into EMF google sheet
-#
-# Author: Sam Jaros (samjaros@stanford.edu)
-# Date: October 2022
 ########################
 
 # Required packages
@@ -11,27 +8,40 @@ require(lubridate)
 require(tidyverse)
 require(stringr)
 
-### Options
-# Today string
-today_string = "20230216"#gsub("-","",as.character(today()))
+############
+# Settings #
+############
 # CDI Survey
-pc_cdi_file = paste0("raw_data/CDI_", today_string, "_PC.csv") # Path to REDCap report in .csv
-sud_cdi_file = paste0("raw_data/CDI_", today_string, "_SUD.csv") # Path to REDCap report in .csv
-# Deal with "Does not apply (8)"
+#   Get these files from REDCap and put them in the raw_data folder
+#     In REDCap, this is "CDI Scores" under "Reports" in the sidebar
+#     Click on "Export Data" > "CSV/Microsoft Excel (raw data)" > "Export Data" > File icon
+#   Change the file name to match format CDI_YYYYMMDD_PC/SUD.csv using the current date and the site type
+#   Change the date in the string on the lines below
+pc_cdi_file = paste0("raw_data/CDI_20230216_PC.csv") # Path to REDCap report in .csv
+sud_cdi_file = paste0("raw_data/CDI_20230216_SUD.csv") # Path to REDCap report in .csv
+# How to deal with "Does not apply (8)"
 dna = 0 #0 makes neutral, NA makes it missing
 # Cutoff for neutral
 neutral_cutoff = 0
-# Assemble scoring scheme
+# Import scoring scheme
 cdi_scoring = read.csv("public_data/cdi_scoring.csv", colClasses=c("q_num"="character"))
 # Output
 output_file = paste0("data/CDI_",gsub("-","",as.character(today())),".csv") # Path to output .csv
-### End of options
+
+##########
+# Import #
+##########
 
 raw_cdi = rbind(data.frame(read.csv(sud_cdi_file), type="SUD"), 
                 data.frame(read.csv(pc_cdi_file), type="PC")) %>%
   # Remove sites that have withdrawn
   filter(imp_support!=5) %>%
   select(-imp_support)
+
+###########################
+# Get long & wide formats #
+###########################
+# TODO: rewrite section with pivot_longer/pivot_wider for readibility
 
 long_cdi = raw_cdi %>%
   select(program_id, redcap_event_name, type, starts_with("cdi_")) %>%
@@ -74,6 +84,10 @@ total_cdi = wide_cdi %>%
   select(date, program_id, type, subscale, barriers, neutral, facilitators)
 
 cdi_data = rbind(wide_cdi, total_cdi)
+
+##########
+# Export #
+##########
 
 write.csv(cdi_data, file=output_file, row.names=F)
 saveRDS(long_cdi, file="data/current_long_cdi.rds")
