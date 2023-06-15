@@ -1,6 +1,4 @@
-::: {align="center"}
-<a href="https://github.com/samjaros-stanford/SITT-MAT"> <img src="arch/SITT-MAT_logo.jpeg" alt="SITT-MAT Project Logo" width="80" height="80"/> </a>
-:::
+<a href="https://github.com/samjaros-stanford/SITT-MAT"> <img src="arch/SITT-MAT_logo.jpeg" alt="SITT-MAT Project Logo" width="120" height="120"/> </a>
 
 # SITT-MAT
 
@@ -43,10 +41,8 @@ Maintaining patient and participant privacy is of primary importance for this pr
 
 ### Code Naming
 
-`00-09` - Intake & process raw data
+`00-09` - Intake & process raw data into tables for analysis
 
-`10-19` - Create data products
+`10-19` - Statistical analyses
 
-`20-29` - Analyses
-
-`30-39` - Visualizations
+`20-29` - Tables & visualizations
