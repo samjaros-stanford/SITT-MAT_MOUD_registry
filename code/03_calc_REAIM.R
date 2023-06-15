@@ -1,13 +1,22 @@
+
+#############################################################################
+### This file does not do REAIM calculations right now                    ###
+###   Currently, the Assemble Data section takes the manual calculations  ###
+###   and saves them as current_reaim.rds. The manual calculations come   ###
+###   from Google Sheets until the new REAIM registry is complete         ###
+#############################################################################
+
 library(lubridate)
 library(stringr)
 library(tidyverse)
 
+# TODO: This file should process data from the new REAIM registry where sites give counts directly
+
 ############
 # Settings #
 ############
-# SUD Patient registry
+# Patient registry
 SUD_registry_file = "raw_data/Registry_20230223_SUD.csv"
-# PC Patient registry
 PC_registry_file = "raw_data/Registry_20230223_PC.csv"
 
 ####################
