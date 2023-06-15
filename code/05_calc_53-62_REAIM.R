@@ -8,7 +8,12 @@ require(readxl)
 require(stringr)
 require(tidyverse)
 
-# Settings
+############
+# Settings #
+############
+# PC group registry files
+#   These files are sent directly to us by the data manager and transferred via
+#   Stanford Medicine Box
 visit_file = "raw_data/SITT-MAT - id53 - DE-ID OUD DIAGNOSIS 3.2022-3.2023.xlsx"
 rx_file = "raw_data/SITT-MAT - id53- DE-ID MOUD 3.2022-3.2023.xlsx"
 
