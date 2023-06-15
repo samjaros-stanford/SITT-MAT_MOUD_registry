@@ -15,7 +15,7 @@ require(stringr)
 #   Get these files from REDCap and put them in the raw_data folder
 #     In REDCap, this is "CDI Scores" under "Reports" in the sidebar
 #     Click on "Export Data" > "CSV/Microsoft Excel (raw data)" > "Export Data" > File icon
-#   Change the file name to match format CDI_YYYYMMDD_PC/SUD.csv using the current date and the site type
+#   Change the file name to match format CDI_[YYYYMMDD]_[PC|SUD].csv using the current date and the site type
 #   Change the date in the string on the lines below
 pc_cdi_file = paste0("raw_data/CDI_20230216_PC.csv") # Path to REDCap report in .csv
 sud_cdi_file = paste0("raw_data/CDI_20230216_SUD.csv") # Path to REDCap report in .csv

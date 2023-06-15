@@ -3,9 +3,13 @@ library(tidyverse)
 ############
 # Settings #
 ############
-# SUD Site Info File
+# Site Info
+#   Get these files from REDCap and put them in the raw_data folder
+#     In REDCap, this is "Program Information" under "Reports" in the sidebar
+#     Click on "Export Data" > "CSV/Microsoft Excel (raw data)" > "Export Data" > File icon
+#   Change the file name to match format INFO_[YYYYMMDD]_[PC|SUD].csv using the current date and the site type
+#   Change the date in the string on the lines below
 SUD_info_file = "raw_data/INFO_20221220_SUD.csv"
-# PC Site Info File
 PC_info_file = "raw_data/INFO_20221220_PC.csv"
 # Program info destination file
 prog_info_file = "data/program_info.rds"
@@ -42,9 +46,9 @@ raw_PC = read_csv(PC_info_file, show_col_types=F) %>%
 
 
 
-#########
-# Write #
-#########
+##########
+# Export #
+##########
 full_site_info = rbind(select(raw_SUD, program_id, demo_goal, site_type, care_level),
       select(raw_PC, program_id, demo_goal, site_type, care_level))
 

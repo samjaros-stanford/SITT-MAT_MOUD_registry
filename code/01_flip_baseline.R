@@ -1,29 +1,30 @@
 ########################
 # Accepts: REDCap Baseline RE-AIM & IMAT outcome reports
-# Outputs: Long form of RE-AIM & IMAT outcomes to input into EMF google sheet
-#
-# Author: Sam Jaros (samjaros@stanford.edu)
-# Date: February 2023
+# Outputs: Long form of baseline RE-AIM & IMAT outcomes
 ########################
 
 # Required packages
-#require(ggplot2)
 require(htmlTable)
 require(lubridate)
 require(tidyverse)
+require(stringr)
 
-### Options
-# Today string
-today_string = gsub("-","",as.character(today()))
+############
+# Settings #
+############
 # RE-AIM
-pc_reaim_file = paste0("raw_data/REAIM_", today_string, "_PC.csv") # Path to REDCap report in .csv
-sud_reaim_file = paste0("raw_data/REAIM_", today_string, "_SUD.csv") # Path to REDCap report in .csv
+#   Get these files from REDCap and put them in the raw_data folder
+#     In REDCap, this is "Baseline RE-AIM" under "Reports" in the sidebar
+#     Click on "Export Data" > "CSV/Microsoft Excel (raw data)" > "Export Data" > File icon
+#   Change the file name to match format REAIM_[YYYYMMDD]_[PC|SUD].csv using the current date and the site type
+#   Change the date in the string on the lines below
+pc_reaim_file = paste0("raw_data/REAIM_20230522_PC.csv") # Path to REDCap report in .csv
+sud_reaim_file = paste0("raw_data/REAIM_20230522_SUD.csv") # Path to REDCap report in .csv
 # IMAT
-pc_imat_file = paste0("raw_data/IMAT_", today_string, "_PC.csv") # Path to REDCap report in .csv
-sud_imat_file = paste0("raw_data/IMAT_", today_string, "_SUD.csv") # Path to REDCap report in .csv
+pc_imat_file = paste0("raw_data/IMAT_20230522_PC.csv") # Path to REDCap report in .csv
+sud_imat_file = paste0("raw_data/IMAT_20230522_SUD.csv") # Path to REDCap report in .csv
 # Output
-output_file = paste0("data/baseline_EMF_", today_string, ".csv") # Path to output .csv
-### End of options
+output_file = paste0("data/baseline_EMF_",gsub("-","",as.character(today())),".csv") # Path to output .csv
 
 ##########
 # RE-AIM #
@@ -90,7 +91,7 @@ imat_data = long_imat %>%
   select(date, program_id, variable, value, type)
 
 ##########
-# Output #
+# Export #
 ##########
 
 reaim_imat = rbind(reaim_data, imat_data)
