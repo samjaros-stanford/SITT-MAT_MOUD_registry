@@ -17,7 +17,7 @@ red_yellow_green = c("#e71d36", "#ff9f1c", "#5d9818")
 font = "Century Gothic"
 month_for_filenames = "Apr23"
 reaim_dims = c(5.49,1.3) # in inches
-imat_dims = c(7.5,2.24) # in inches
+imat_size = "tall" #tall or short
 imat_dates = c("Sep-22", "Apr-23")
 
 ##########
@@ -134,6 +134,17 @@ make_referralLinkage = function(id, save=F){
 
 # Line plot for IMAT subscale & total by month
 make_imat = function(id, save=F){
+  # Need to set sizing based on tall/short desired size
+  #   imat_dims specifies final plot size in inches (width, height)
+  #   imat_text_size specifies text sizes (all other text, x axis labels)
+  if(imat_size=="short"){
+    imat_dims = c(7.5,2.24)
+    imat_text_size = c(8,9)
+  } else {
+    imat_dims = c(7.5,5)
+    imat_text_size = c(11, 8.2)
+  }
+  
   imat_labels = list("imat_d1" = "Infrastructure",
                      "imat_d2" = "Clinic Culture\n& Environment",
                      "imat_d3" = "Patient\nIdentification\n& Initiating Care",
@@ -158,28 +169,37 @@ make_imat = function(id, save=F){
     scale_y_continuous(limits=c(1,5), breaks=1:5, labels=imat_scale_labels) +
     theme_minimal() +
     theme(axis.title = element_blank(),
-          axis.text.x = element_text(size=8), 
+          axis.text.x = element_text(size=imat_text_size[2]),
+          axis.text.y = element_text(size=imat_text_size[1]),
           axis.text = element_text(family=font, color="black"),
           panel.grid.major.x = element_blank(),
           panel.grid.minor.y = element_blank(),
-          plot.margin = margin(-10,2,15,2),
+          plot.margin = margin(-10,2,20,2),
           legend.box.margin = margin(5,-10,-10,-10),
           legend.position = "top",
-          legend.text = element_text(size=9, family=font, color="black"),
+          legend.text = element_text(size=imat_text_size[1], family=font, color="black"),
           legend.title = element_blank()) +
     coord_cartesian(clip="off")
   
   # Annotate plot to specify which variables are dimensions
   dim_line = linesGrob(x=c(.37,10.5), y=c(-2,-2), gp=gpar(col="black", lwd=1))
-  dim_text = textGrob(label="DIMENSIONS", hjust=0.5, gp=gpar(fontfamily=font, fontsize=9))
+  dim_text = textGrob(label="DIMENSIONS", hjust=0.5, gp=gpar(fontfamily=font, fontsize=imat_text_size[1]))
   total_line = linesGrob(x=c(14.42,15.62), y=c(-2,-2), gp=gpar(col="black", lwd=1))
-  total_text = textGrob(label="TOTAL", hjust=0.5, gp=gpar(fontfamily=font, fontsize=9))
+  total_text = textGrob(label="TOTAL", hjust=0.5, gp=gpar(fontfamily=font, fontsize=imat_text_size[1]))
   
-  plot = plot +
-    annotation_custom(dim_line, ymin=-1.3, ymax=-1.3, xmin=.2, xmax=.9) +
-    annotation_custom(dim_text, ymin=-2.1, ymax=-1.1, xmin=1.5, xmax=6.5) +
-    annotation_custom(total_line, ymin=-1.3, ymax=-1.3, xmin=.5, xmax=.999) +
-    annotation_custom(total_text, ymin=-2.1, ymax=-1.1, xmin=7.51, xmax=8.51)
+  if(imat_size=="short"){
+    plot = plot +
+      annotation_custom(dim_line, ymin=-1.3, ymax=-1.3, xmin=.2, xmax=.9) +
+      annotation_custom(dim_text, ymin=-2.1, ymax=-1.1, xmin=1.5, xmax=6.5) +
+      annotation_custom(total_line, ymin=-1.3, ymax=-1.3, xmin=.5, xmax=.999) +
+      annotation_custom(total_text, ymin=-2.1, ymax=-1.1, xmin=7.51, xmax=8.51)
+  } else {
+    plot = plot +
+      annotation_custom(dim_line, ymin=.13, ymax=.13, xmin=.2, xmax=.9) +
+      annotation_custom(dim_text, ymin=.03, ymax=.03, xmin=1.5, xmax=6.5) +
+      annotation_custom(total_line, ymin=.13, ymax=.13, xmin=.5, xmax=.999) +
+      annotation_custom(total_text, ymin=.03, ymax=.03, xmin=7.51, xmax=8.51)
+  }
   
   if(save){
     filepath = paste0("figures/QRIR_figures/", id, "/", id, "_imat_", month_for_filenames, ".png")
