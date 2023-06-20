@@ -9,8 +9,8 @@ library(tidyverse)
 #     Click on "Export Data" > "CSV/Microsoft Excel (raw data)" > "Export Data" > File icon
 #   Change the file name to match format INFO_[YYYYMMDD]_[PC|SUD].csv using the current date and the site type
 #   Change the date in the string on the lines below
-SUD_info_file = "raw_data/INFO_20221220_SUD.csv"
-PC_info_file = "raw_data/INFO_20221220_PC.csv"
+SUD_info_file = "raw_data/INFO_20230619_SUD.csv"
+PC_info_file = "raw_data/INFO_20230619_PC.csv"
 # Program info destination file
 prog_info_file = "data/program_info.rds"
 
@@ -20,8 +20,9 @@ prog_info_file = "data/program_info.rds"
 raw_SUD = read_csv(SUD_info_file, show_col_types=F) %>% 
   filter(imp_support != 5) %>%
   mutate(site_type = "SUD",
-         isOutpatient = demo_level_of_care___1==1 | demo_level_of_care___2==1,
-         isInpatient = demo_level_of_care___3==1 | demo_level_of_care___4==1 | demo_level_of_care___5==1,
+         demo_level_of_care = as.character(demo_level_of_care),
+         isOutpatient = grepl("1", demo_level_of_care) | grepl("2", demo_level_of_care),
+         isInpatient = grepl("3", demo_level_of_care) | grepl("4", demo_level_of_care) | grepl("5", demo_level_of_care),
          care_level = case_when(
            isOutpatient & isInpatient ~ "Both",
            isOutpatient               ~ "Outpatient",
@@ -43,7 +44,6 @@ raw_PC = read_csv(PC_info_file, show_col_types=F) %>%
            NA ~ NA_character_
          ),
          demo_goal = factor(demo_goal, levels=c(1,2), labels=c("Start MOUD", "Expand MOUD")))
-
 
 
 ##########
