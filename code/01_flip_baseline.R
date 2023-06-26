@@ -25,7 +25,7 @@ folder_path <- "raw_data/"
 # List all the file names in the folder
 file_names <- list.files(path = folder_path)
 
-# Get the file names containing the search string -  both substrings 'CDI' and 'PC' (in any order)
+# Get the file names containing the search string 
 matching_files <- file_names[grepl("(?=.*REAIM)(?=.*PC)", file_names, perl = TRUE)]
 pc_reaim_file <- paste0(folder_path, matching_files[1])
 
@@ -34,10 +34,10 @@ sud_reaim_file <- paste0(folder_path, matching_files[1])
 
 
 # IMAT
-matching_files <- file_names[grepl("(?=.*IMAT)(?=.*PC)", file_names, perl = TRUE)]
+matching_files <- file_names[grepl("(?=.*IMAT_)(?=.*PC)", file_names, perl = TRUE)]
 pc_imat_file = paste0(folder_path, matching_files[1])
 
-matching_files <- file_names[grepl("(?=.*IMAT)(?=.*SUD)", file_names, perl = TRUE)]
+matching_files <- file_names[grepl("(?=.*IMAT_)(?=.*SUD)", file_names, perl = TRUE)]
 sud_imat_file = paste0(folder_path, matching_files[1])
 
 # Output

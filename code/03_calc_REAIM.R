@@ -22,7 +22,7 @@ folder_path <- "raw_data/"
 # List all the file names in the folder
 file_names <- list.files(path = folder_path)
 
-# Get the file names containing the search string -  both substrings 'CDI' and 'PC' (in any order)
+# Get the file names containing the search string
 matching_files <- file_names[grepl("(?=.*Registry)(?=.*SUD)", file_names, perl = TRUE)]
 SUD_registry_file <- paste0(folder_path, matching_files[1])
 
