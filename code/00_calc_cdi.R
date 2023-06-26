@@ -17,8 +17,8 @@ require(stringr)
 #     Click on "Export Data" > "CSV/Microsoft Excel (raw data)" > "Export Data" > File icon
 #   Change the file name to match format CDI_[YYYYMMDD]_[PC|SUD].csv using the current date and the site type
 #   Change the date in the string on the lines below
-pc_cdi_file = paste0("raw_data/CDI_20230216_PC.csv") # Path to REDCap report in .csv
-sud_cdi_file = paste0("raw_data/CDI_20230216_SUD.csv") # Path to REDCap report in .csv
+pc_cdi_file = paste0("raw_data/CDI_20230619_PC.csv") # Path to REDCap report in .csv
+sud_cdi_file = paste0("raw_data/CDI_20230619_SUD.csv") # Path to REDCap report in .csv
 # How to deal with "Does not apply (8)"
 dna = 0 #0 makes neutral, NA makes it missing
 # Cutoff for neutral

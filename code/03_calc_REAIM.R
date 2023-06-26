@@ -16,8 +16,19 @@ library(tidyverse)
 # Settings #
 ############
 # Patient registry
-SUD_registry_file = "raw_data/Registry_20230223_SUD.csv"
-PC_registry_file = "raw_data/Registry_20230223_PC.csv"
+#Set the directory path
+folder_path <- "raw_data/"
+
+# List all the file names in the folder
+file_names <- list.files(path = folder_path)
+
+# Get the file names containing the search string -  both substrings 'CDI' and 'PC' (in any order)
+matching_files <- file_names[grepl("(?=.*Registry)(?=.*SUD)", file_names, perl = TRUE)]
+SUD_registry_file <- paste0(folder_path, matching_files[1])
+
+matching_files <- file_names[grepl("(?=.*Registry)(?=.*PC)", file_names, perl = TRUE)]
+PC_registry_file = paste0(folder_path, matching_files[1])
+
 
 ####################
 # Load & Prep Data #
