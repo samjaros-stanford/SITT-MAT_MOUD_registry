@@ -17,8 +17,21 @@ require(stringr)
 #     Click on "Export Data" > "CSV/Microsoft Excel (raw data)" > "Export Data" > File icon
 #   Change the file name to match format CDI_[YYYYMMDD]_[PC|SUD].csv using the current date and the site type
 #   Change the date in the string on the lines below
-pc_cdi_file = paste0("raw_data/CDI_20230216_PC.csv") # Path to REDCap report in .csv
-sud_cdi_file = paste0("raw_data/CDI_20230216_SUD.csv") # Path to REDCap report in .csv
+
+# Set the directory path
+folder_path <- "raw_data/"
+
+# List all the file names in the folder
+file_names <- list.files(path = folder_path)
+
+# Get the file names containing the search string -  both substrings 'CDI' and 'PC' (in any order)
+matching_files <- file_names[grepl("(?=.*CDI)(?=.*PC)", file_names, perl = TRUE)]
+pc_cdi_file <- paste0(folder_path, matching_files[1])
+
+matching_files <- file_names[grepl("(?=.*CDI)(?=.*SUD)", file_names, perl = TRUE)]
+sud_cdi_file = paste0(folder_path, matching_files[1])
+
+
 # How to deal with "Does not apply (8)"
 dna = 0 #0 makes neutral, NA makes it missing
 # Cutoff for neutral

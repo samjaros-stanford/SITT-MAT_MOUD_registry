@@ -11,7 +11,7 @@ rm(list=ls())
 ####################
 # Install packages #
 ####################
-packages = c("htmlTable", "lubridate", "readxl", "stringr", "tidyverse")
+packages = c("htmlTable", "lubridate", "readxl", "stringr", "tidyverse", "here")
 install.packages(packages)
 
 ##########################################

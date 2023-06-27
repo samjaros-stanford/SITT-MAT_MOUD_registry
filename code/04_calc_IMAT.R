@@ -10,8 +10,18 @@ library(tidyverse)
 #     Click on "Export Data" > "CSV/Microsoft Excel (raw data)" > "Export Data" > File icon
 #   Change the file name to match format IMAT-all_[YYYYMMDD]_[PC|SUD].csv using the current date and the site type
 #   Change the date in the string on the lines below
-pc_imat_file = paste0("raw_data/IMAT-all_20230613_PC.csv") # Path to REDCap report in .csv
-sud_imat_file = paste0("raw_data/IMAT-all_20230613_SUD.csv") # Path to REDCap report in .csv
+folder_path <- "raw_data/"
+
+# List all the file names in the folder
+file_names <- list.files(path = folder_path)
+
+# Get the file names containing the search string 
+matching_files <- file_names[grepl("(?=.*IMAT-all)(?=.*SUD)", file_names, perl = TRUE)]
+sud_imat_file <- paste0(folder_path, matching_files[1])
+
+# Get the file names containing the search string
+matching_files <- file_names[grepl("(?=.*IMAT-all)(?=.*PC)", file_names, perl = TRUE)]
+pc_imat_file <- paste0(folder_path, matching_files[1])
 
 
 ##########

@@ -18,13 +18,31 @@ require(stringr)
 #     Click on "Export Data" > "CSV/Microsoft Excel (raw data)" > "Export Data" > File icon
 #   Change the file name to match format REAIM_[YYYYMMDD]_[PC|SUD].csv using the current date and the site type
 #   Change the date in the string on the lines below
-pc_reaim_file = paste0("raw_data/REAIM_20230522_PC.csv") # Path to REDCap report in .csv
-sud_reaim_file = paste0("raw_data/REAIM_20230522_SUD.csv") # Path to REDCap report in .csv
+
+# Set the directory path
+folder_path <- "raw_data/"
+
+# List all the file names in the folder
+file_names <- list.files(path = folder_path)
+
+# Get the file names containing the search string 
+matching_files <- file_names[grepl("(?=.*REAIM)(?=.*PC)", file_names, perl = TRUE)]
+pc_reaim_file <- paste0(folder_path, matching_files[1])
+
+matching_files <- file_names[grepl("(?=.*REAIM)(?=.*SUD)", file_names, perl = TRUE)]
+sud_reaim_file <- paste0(folder_path, matching_files[1])
+
+
 # IMAT
-pc_imat_file = paste0("raw_data/IMAT_20230522_PC.csv") # Path to REDCap report in .csv
-sud_imat_file = paste0("raw_data/IMAT_20230522_SUD.csv") # Path to REDCap report in .csv
+matching_files <- file_names[grepl("(?=.*IMAT_)(?=.*PC)", file_names, perl = TRUE)]
+pc_imat_file = paste0(folder_path, matching_files[1])
+
+matching_files <- file_names[grepl("(?=.*IMAT_)(?=.*SUD)", file_names, perl = TRUE)]
+sud_imat_file = paste0(folder_path, matching_files[1])
+
 # Output
 output_file = paste0("data/baseline_EMF_",gsub("-","",as.character(today())),".csv") # Path to output .csv
+
 
 ##########
 # RE-AIM #

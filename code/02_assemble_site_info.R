@@ -9,8 +9,20 @@ library(tidyverse)
 #     Click on "Export Data" > "CSV/Microsoft Excel (raw data)" > "Export Data" > File icon
 #   Change the file name to match format INFO_[YYYYMMDD]_[PC|SUD].csv using the current date and the site type
 #   Change the date in the string on the lines below
-SUD_info_file = "raw_data/INFO_20230619_SUD.csv"
-PC_info_file = "raw_data/INFO_20230619_PC.csv"
+
+# Set the directory path
+folder_path <- "raw_data/"
+
+# List all the file names in the folder
+file_names <- list.files(path = folder_path)
+
+# Get the file names containing the search string
+matching_files <- file_names[grepl("(?=.*INFO)(?=.*SUD)", file_names, perl = TRUE)]
+SUD_info_file <- paste0(folder_path, matching_files[1])
+
+matching_files <- file_names[grepl("(?=.*INFO)(?=.*PC)", file_names, perl = TRUE)]
+PC_info_file = paste0(folder_path, matching_files[1])
+
 # Program info destination file
 prog_info_file = "data/program_info.rds"
 
