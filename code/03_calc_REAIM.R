@@ -112,8 +112,8 @@ patient_data = raw_data %>%
 ### TEMP ###
 REAIM = read.csv("raw_data/MANUAL_SITT-MAT_Quarterly Data Reports - Completed Manuals.csv") %>%
   mutate(date = fast_strptime(date, "%b-%y"),
-         value=as.numeric(final.value)) %>%
-  select(date, program_id, variable, value, type)
+         value = as.numeric(final.value)) %>%
+  select(date, program_id, variable, value)
 ### /TEMP ###
 
 saveRDS(REAIM, "data/current_reaim.rds")
