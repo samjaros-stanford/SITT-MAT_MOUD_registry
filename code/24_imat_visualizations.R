@@ -1,8 +1,10 @@
 library(ggplot2)
 library(tidyverse)
 
-imat_data = readRDS(file="data/current_reaim-imat.rds") %>%
-  filter(startsWith(variable, "imat"))
+imat_data = readRDS(file="data/current_imat_subscale.rds") %>%
+  mutate(type=if_else(as.numeric(str_sub(program_id,-2,-1))<50,"SUD","PC"))
+
+imat_item_data = readRDS(file="data/current_imat_item.rds")
 
 ############
 # IMAT Viz #
@@ -99,3 +101,15 @@ imat_viz_wide = imat_viz_data %>%
               .cols = -Dimension)
 
 write.table(imat_viz_wide, "clipboard", sep="\t", row.names=F)
+
+### Summarize all items
+april_item_summary = imat_data %>%
+  select(date, program_id, variable, value) %>%
+  rbind(imat_item_data) %>%
+  filter(date=="2023-04-01") %>%
+  group_by(variable) %>%
+  summarize(mean = mean(value),
+            sd = sd(value),
+            ptile25 = quantile(value, .25),
+            ptile75 = quantile(value, .75))
+write_excel_csv(april_item_summary, file="data/Apr23 IMAT Item Summary.csv")
