@@ -1,5 +1,5 @@
 library(extrafont)
-#font_import()
+font_import()
 loadfonts(device="win")
 library(ggplot2)
 library(grid)
@@ -16,7 +16,7 @@ SITTMAT_colors = c("#007ea7", "#ff9f1c", "#5d9818", "#e71d36", "#9900ff", "#00ff
 red_yellow_green = c("#e71d36", "#ff9f1c", "#5d9818")
 font = "Century Gothic"
 month_for_filenames = "Apr23"
-reaim_dims = c(5.49,1.3) # in inches
+reaim_dims = c(5.4,2.12) # in inches, normally 5.49, 1.3
 imat_size = "tall" #tall or short
 imat_dates = c("Sep-22", "Apr-23")
 
@@ -37,7 +37,7 @@ make_MOUDplot = function(id, save=F){
     geom_line(aes(color=program_id), linewidth=1, show.legend=F) +
     geom_label(aes(label=paste0(reaim_b4, "/", reaim_b1)), size=3, family=font) +
     scale_color_manual(values=SITTMAT_colors) +
-    scale_x_date(date_labels="%b-%y") +
+    scale_x_date(date_breaks="month", date_labels="%b-%y") +
     scale_y_continuous(breaks=seq(0,100,25), labels=function(x) paste0(x,"%"), limits=c(0,100)) +
     theme_minimal() +
     theme(panel.grid.major.x = element_blank(),
@@ -73,7 +73,7 @@ make_72Access = function(id, save=F){
     geom_line(aes(color=program_id), linewidth=1, show.legend=F) +
     geom_label(aes(label=paste0(reaim_c1_n,"/",reaim_b2)), size=3, family=font) +
     scale_color_manual(values=SITTMAT_colors) +
-    scale_x_date(date_labels="%b-%y") +
+    scale_x_date(date_breaks="month", date_labels="%b-%y") +
     scale_y_continuous(breaks=seq(0,100,25), labels=function(x) paste0(x,"%"), limits=c(0,100)) +
     theme_minimal() +
     theme(panel.grid.major.x = element_blank(),
@@ -105,7 +105,7 @@ make_referralLinkage = function(id, save=F){
   plot = ggplot(plot_data, aes(x=date, y=value)) +
     geom_col(aes(fill=variable), width=10) +
     scale_fill_manual(labels=~referral_labels[.x], values=red_yellow_green, guide=guide_legend(reverse=T, override.aes=list(shape=15))) +
-    scale_x_date(date_labels="%b-%y") +
+    scale_x_date(date_breaks="month", date_labels="%b-%y") +
     scale_y_continuous(labels=~paste0(.x,"%")) +
     theme_minimal() +
     theme(panel.grid.major.x = element_blank(),
@@ -156,14 +156,23 @@ make_imat = function(id, save=F){
   imat_scale_labels = c("1: Not\nIntegrated", "2", "3: Partially\nIntegrated",
                         "4", "5: Fully\nIntegrated")
 
-  plot_data = report_data %>%
-    filter(program_id==id, startsWith(variable, "imat")) %>%
-    # Dates need to be factors for legend
-    mutate(date = factor(format(date, "%b-%y"), levels=imat_dates, ordered=T))
+  if (id=="all") {
+    plot_data = report_data %>%
+      filter(startsWith(variable, prefix="imat")) %>%
+      group_by(date, variable) %>%
+      summarize(value = mean(value, na.rm=T), .groups="keep") %>%
+      # Dates need to be factors for legend
+      mutate(date = factor(format(date, "%b-%y"), levels=imat_dates, ordered=T))
+  } else {
+    plot_data = report_data %>%
+      filter(program_id==id, startsWith(variable, "imat")) %>%
+      # Dates need to be factors for legend
+      mutate(date = factor(format(date, "%b-%y"), levels=imat_dates, ordered=T))
+  }
   
   plot = ggplot(plot_data, aes(x=variable, y=value, group=date)) +
-    geom_point(aes(color=date), size=4) +
     geom_line(aes(color=date), linewidth=2, show.legend=F) +
+    geom_point(aes(color=date), size=4) +
     scale_color_manual(values=SITTMAT_colors) +
     scale_x_discrete(labels=~imat_labels[.x]) +
     scale_y_continuous(limits=c(1,5), breaks=1:5, labels=imat_scale_labels) +
@@ -209,6 +218,7 @@ make_imat = function(id, save=F){
   return(plot)
 }
 
+
 ########
 # Main #
 ########
@@ -236,8 +246,7 @@ make_allPlots = function(id, save_plots=F, show_plots=T){
 }
 
 #programs = sort(unique(report_data$program_id))
-all_programs = c("id01", "id02", "id15", "id17",  "id34", "id35", "id38", 
-                 "id39", "id40", "id63")
+all_programs = c(paste0("id", 53:62))
 
 for(program in all_programs){
   make_allPlots(program, save_plots=T, show_plots=F)
