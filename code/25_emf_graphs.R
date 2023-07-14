@@ -1,6 +1,6 @@
 library(extrafont)
 font_import()
-loadfonts(device="win")
+loadfonts(device="win") # NOTE: May need to change this to have it work on Mac
 library(ggplot2)
 library(grid)
 library(lubridate)
@@ -10,9 +10,12 @@ library(tidyverse)
 ############
 # Settings #
 ############
+# QRIR Data assembled by code/09_combine_for_emf.R
 report_data = read.csv(here::here("data/current_QRIR.csv")) %>%
   mutate(date = ymd(date))
+# Colors for most plots
 SITTMAT_colors = c("#007ea7", "#ff9f1c", "#5d9818", "#e71d36", "#9900ff", "#00ffff")
+# Colors for linkage plots
 red_yellow_green = c("#e71d36", "#ff9f1c", "#5d9818")
 font = "Century Gothic"
 month_for_filenames = "Apr23"
@@ -219,11 +222,12 @@ make_imat = function(id, save=F){
 }
 
 
-########
-# Main #
-########
+#################################
+# v USE THESE TO CREATE PLOTS v #
+#   Runner functions            #
+#################################
 
-# Function to run through all plots
+# Produce all plots
 #   If show_plots=T, it will ask for user input before showing next plot
 make_allPlots = function(id, save_plots=F, show_plots=T){
   p = make_MOUDplot(id, save=save_plots)
@@ -244,15 +248,15 @@ make_allPlots = function(id, save_plots=F, show_plots=T){
   p = make_imat(id, save=save_plots)
   if(show_plots) print(p)
 }
-
-#programs = sort(unique(report_data$program_id))
-all_programs = c(paste0("id", 53:62))
-
-for(program in all_programs){
+# Define which sites you want to produce plots for
+programs = sort(unique(report_data$program_id))
+# Iterate through programs & produce all plots
+for(program in programs){
   make_allPlots(program, save_plots=T, show_plots=F)
 }
 
-# Programs that do not have new REAIM scores
+
+# Produce only IMAT (for sites that don't have REAIM data)
 imat_programs = c("id26", "id51", "id53")
 
 for(program in imat_programs){
