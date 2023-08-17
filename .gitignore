@@ -4,6 +4,7 @@
 .Ruserdata
 
 data/
+figures/
 raw_data/
 
 *.nb.html
