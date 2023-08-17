@@ -18,9 +18,9 @@ SITTMAT_colors = c("#007ea7", "#ff9f1c", "#5d9818", "#e71d36", "#9900ff", "#00ff
 # Colors for linkage plots
 red_yellow_green = c("#e71d36", "#ff9f1c", "#5d9818")
 font = "Century Gothic"
-month_for_filenames = "Apr23"
+month_for_filenames = "July23"
 reaim_dims = c(5.4,2.12) # in inches, normally 5.49, 1.3
-imat_size = "tall" #tall or short
+imat_size = "short" #tall or short
 imat_dates = c("Sep-22", "Apr-23")
 
 ##########
@@ -35,7 +35,11 @@ make_MOUDplot = function(id, save=F){
                 names_from = variable,
                 values_from = value)
   
+  targetLabel_y = ifelse(plot_data[plot_data$date==max(plot_data$date),"reaim_b4p"]>75,65,85)
   plot = ggplot(plot_data, aes(x=date, y=reaim_b4p)) +
+    geom_hline(yintercept=75, linetype="dashed", color=SITTMAT_colors[3]) +
+    geom_text(aes(x=max(date),y=targetLabel_y,label="SITT-MAT Target"), 
+              color=SITTMAT_colors[3], size=3, family=font, hjust=0.8) +
     geom_point(aes(color=program_id), size=3, show.legend=F) +
     geom_line(aes(color=program_id), linewidth=1, show.legend=F) +
     geom_label(aes(label=paste0(reaim_b4, "/", reaim_b1)), size=3, family=font) +
@@ -52,7 +56,7 @@ make_MOUDplot = function(id, save=F){
     coord_cartesian(clip="off")
   
   if(save){
-    filepath = paste0("figures/QRIR_figures/", id, "/", id, "_MOUDplot_", month_for_filenames, ".png")
+    filepath = paste0("figures/QRIR_figures_",month_for_filenames,"/", id, "/", id, "_MOUDplot_", month_for_filenames, ".png")
     ggsave(here::here(filepath), plot, width=reaim_dims[1], height=reaim_dims[2], units="in")
   }
   
@@ -87,7 +91,7 @@ make_72Access = function(id, save=F){
     coord_cartesian(clip="off")
   
   if(save){
-    filepath = paste0("figures/QRIR_figures/", id, "/", id, "_72Access_", month_for_filenames, ".png")
+    filepath = paste0("figures/QRIR_figures_",month_for_filenames,"/", id, "/", id, "_72Access_", month_for_filenames, ".png")
     ggsave(here::here(filepath), plot, width=reaim_dims[1], height=reaim_dims[2], units="in")
   }
   
@@ -124,7 +128,7 @@ make_referralLinkage = function(id, save=F){
     coord_cartesian(clip="off")
   
   if(save){
-    filepath = paste0("figures/QRIR_figures/", id, "/", id, "_referralLinkage_", month_for_filenames, ".png")
+    filepath = paste0("figures/QRIR_figures_",month_for_filenames,"/", id, "/", id, "_referralLinkage_", month_for_filenames, ".png")
     ggsave(here::here(filepath), plot, width=reaim_dims[1], height=reaim_dims[2], units="in")
   }
   
@@ -142,19 +146,20 @@ make_imat = function(id, save=F){
   #   imat_text_size specifies text sizes (all other text, x axis labels)
   if(imat_size=="short"){
     imat_dims = c(7.5,2.24)
-    imat_text_size = c(8,9)
+    imat_text_size = c(8,7.8)
   } else {
     imat_dims = c(7.5,5)
     imat_text_size = c(11, 8.2)
   }
   
   imat_labels = list("imat_d1" = "Infrastructure",
-                     "imat_d2" = "Clinic Culture\n& Environment",
-                     "imat_d3" = "Patient\nIdentification\n& Initiating Care",
-                     "imat_d4" = "Care Delivery &\nTreatment\nResponse\nMonitoring",
+                     "imat_d2" = "Clinic\nCulture &\nEnvironment",
+                     "imat_d3" = "Patient\nIdentification\n& Initiating\nCare",
+                     "imat_d4" = "Care Delivery\n& Treatment\nResponse\nMonitoring",
                      "imat_d5" = "Care\nCoordination",
                      "imat_d6" = "Workforce",
-                     "imat_d7" = "Staff Training &\nDevelopment",
+                     "imat_d7" = "Staff Training\n& Development",
+                     "imat_s1" = "Low Barrier\nCare",
                      "imat_total" = "Total")
   imat_scale_labels = c("1: Not\nIntegrated", "2", "3: Partially\nIntegrated",
                         "4", "5: Fully\nIntegrated")
@@ -194,17 +199,21 @@ make_imat = function(id, save=F){
     coord_cartesian(clip="off")
   
   # Annotate plot to specify which variables are dimensions
-  dim_line = linesGrob(x=c(.37,10.5), y=c(-2,-2), gp=gpar(col="black", lwd=1))
+  dim_line = linesGrob(x=c(.4,10.5), y=c(-2,-2), gp=gpar(col="black", lwd=1))
   dim_text = textGrob(label="DIMENSIONS", hjust=0.5, gp=gpar(fontfamily=font, fontsize=imat_text_size[1]))
-  total_line = linesGrob(x=c(14.42,15.62), y=c(-2,-2), gp=gpar(col="black", lwd=1))
+  sub_line = linesGrob(x=c(14.25,15.9), y=c(-2,-2), gp=gpar(col="black", lwd=1))
+  sub_text = textGrob(label="SUBSCALE", hjust=0.5, gp=gpar(fontfamily=font, fontsize=imat_text_size[1]))
+  total_line = linesGrob(x=c(16.2,17.85), y=c(-2,-2), gp=gpar(col="black", lwd=1))
   total_text = textGrob(label="TOTAL", hjust=0.5, gp=gpar(fontfamily=font, fontsize=imat_text_size[1]))
   
   if(imat_size=="short"){
     plot = plot +
-      annotation_custom(dim_line, ymin=-1.3, ymax=-1.3, xmin=.2, xmax=.9) +
+      annotation_custom(dim_line, ymin=-1.33, ymax=-1.33, xmin=.2, xmax=.9) +
       annotation_custom(dim_text, ymin=-2.1, ymax=-1.1, xmin=1.5, xmax=6.5) +
-      annotation_custom(total_line, ymin=-1.3, ymax=-1.3, xmin=.5, xmax=.999) +
-      annotation_custom(total_text, ymin=-2.1, ymax=-1.1, xmin=7.51, xmax=8.51)
+      annotation_custom(sub_line, ymin=-1.33, ymax=-1.33, xmin=.5, xmax=.999) +
+      annotation_custom(sub_text, ymin=-2.1, ymax=-1.1, xmin=7.51, xmax=8.51) +
+      annotation_custom(total_line, ymin=-1.33, ymax=-1.33, xmin=.5, xmax=.999) +
+      annotation_custom(total_text, ymin=-2.1, ymax=-1.1, xmin=8.51, xmax=9.51)
   } else {
     plot = plot +
       annotation_custom(dim_line, ymin=.13, ymax=.13, xmin=.2, xmax=.9) +
@@ -214,18 +223,17 @@ make_imat = function(id, save=F){
   }
   
   if(save){
-    filepath = paste0("figures/QRIR_figures/", id, "/", id, "_imat_", month_for_filenames, ".png")
+    filepath = paste0("figures/QRIR_figures_",month_for_filenames,"/", id, "/", id, "_imat_", month_for_filenames, ".png")
     ggsave(here::here(filepath), plot, width=imat_dims[1], height=imat_dims[2], units="in")
   }
   
   return(plot)
 }
 
-
-#################################
-# v USE THESE TO CREATE PLOTS v #
-#   Runner functions            #
-#################################
+##########################
+# | USE THIS FOR PLOTS | #
+# v  Runner functions  v #
+##########################
 
 # Produce all plots
 #   If show_plots=T, it will ask for user input before showing next plot
@@ -257,7 +265,7 @@ for(program in programs){
 
 
 # Produce only IMAT (for sites that don't have REAIM data)
-imat_programs = c("id26", "id51", "id53")
+imat_programs = sort(unique(report_data %>% filter(startsWith(variable,"imat")) %>% pull(program_id)))
 
 for(program in imat_programs){
   make_imat(program, save=T)
