@@ -216,12 +216,17 @@ B2 = study_visits %>%
 # B4: Number of patients prescribed MOUD
 #     The total number of patients administered MOUD in the past month. Note: 
 #       Include patients who may be new, restarted, or established.
+
+# Start with dataset of each patient * month
 B4 = rx_start_stop %>%
+  # Filter for only rows where the patient was taking MOUD that month
   filter(is_rx_month) %>%
+  # Get count of patients by site * month
   group_by(program_id, months) %>%
   summarize(reaim_b4 = n(), .groups="keep") %>%
   ungroup() %>%
   mutate(date = my(months)) %>%
+  # Calculate new and existing MOUD as a percent of OUD diagnoses
   left_join(B1, by=c("program_id", "date")) %>%
   mutate(reaim_b4p = reaim_b4/value*100) %>%
   select(-variable, -value) %>%
