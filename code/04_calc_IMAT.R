@@ -45,15 +45,26 @@ item_imat = raw_imat %>%
                names_to="variable",
                values_to="value")
 
-#############
-# Subscales #
-#############
+##########################
+# Dimensions & Subscales #
+##########################
 subscale_imat = raw_imat %>%
   select(date, program_id, ends_with("_mean")) %>%
   pivot_longer(ends_with("_mean"),
                names_pattern="(.*)_mean",
                names_to="variable",
-               values_to="value")
+               values_to="value") %>%
+  # Define & merge in Low Barrier Care subscale
+  rbind(raw_imat %>%
+          rowwise() %>%
+          mutate(imat_s1_mean = mean(c(imat_d3_11,imat_d3_12,imat_d3_14,imat_d4_9,
+                                       #imat_d4_11, imat_d4_12, 
+                                       imat_d5_5,imat_d5_6,imat_d6_1,imat_d6_2,imat_d7_3), na.rm=T)) %>%
+          select(date, program_id, imat_s1_mean) %>%
+          pivot_longer(c(-date, -program_id),
+                       names_pattern="(.*)_mean",
+                       names_to="variable",
+                       values_to="value"))
 
 ##########
 # Export #
