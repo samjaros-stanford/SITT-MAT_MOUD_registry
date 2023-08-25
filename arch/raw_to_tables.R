@@ -47,7 +47,7 @@ demogs = valid %>%
 
 ### Get prescription info
 mutate(pr_date_admission=mdy(pr_date_admission),
-       pr_date_diagnosis=mdy(pr_date_diagnosis)) %>%
+       pr_date_diagnosis=mdy(pr_date_diagnosis))
 
 
 
