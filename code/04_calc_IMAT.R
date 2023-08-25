@@ -16,11 +16,11 @@ folder_path <- "raw_data/"
 file_names <- list.files(path = folder_path)
 
 # Get the file names containing the search string 
-matching_files <- file_names[grepl("(?=.*IMAT-all)(?=.*SUD)", file_names, perl = TRUE)]
+matching_files <- sort(file_names[grepl("(?=.*IMAT-all)(?=.*SUD)", file_names, perl = TRUE)], decreasing=T)
 sud_imat_file <- paste0(folder_path, matching_files[1])
 
 # Get the file names containing the search string
-matching_files <- file_names[grepl("(?=.*IMAT-all)(?=.*PC)", file_names, perl = TRUE)]
+matching_files <- sort(file_names[grepl("(?=.*IMAT-all)(?=.*PC)", file_names, perl = TRUE)], decreasing=T)
 pc_imat_file <- paste0(folder_path, matching_files[1])
 
 
