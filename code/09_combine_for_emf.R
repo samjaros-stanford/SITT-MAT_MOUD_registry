@@ -8,7 +8,7 @@ library(tidyverse)
 # Prep REAIM
 #   Add clinic type
 reaim = readRDS("data/current_reaim.rds") %>%
-  rbind(readRDS("data/current_53-62_reaim.rds")) %>%
+  bind_rows(readRDS("data/current_53-62_reaim.rds")) %>%
   mutate(type = if_else(program_id %in% paste0("id", str_pad(0:49, 2, "left", "0")),
                                                                 "SUD",
                                                                 "PC"))
@@ -21,4 +21,4 @@ imat = readRDS("data/current_imat_subscale.rds") %>%
                         "PC"))
 
 # Create data set for "Quarterly REAIM/IMAT Reports" (QRIR)
-write.csv(rbind(reaim, imat), "data/current_QRIR.csv", row.names=F)
+write.csv(bind_rows(reaim, imat), "data/current_QRIR.csv", row.names=F)

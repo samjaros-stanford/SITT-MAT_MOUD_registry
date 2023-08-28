@@ -3,50 +3,47 @@
 # Outputs: CDI scores to input into EMF google sheet
 ########################
 
-# Required packages
-require(lubridate)
-require(tidyverse)
-require(stringr)
+# Load utilities
+source(here::here("code/__utils.R"))
 
 ############
 # Settings #
 ############
-# CDI Survey
-#   Get these files from REDCap and put them in the raw_data folder
-#     In REDCap, this is "CDI Scores" under "Reports" in the sidebar
-#     Click on "Export Data" > "CSV/Microsoft Excel (raw data)" > "Export Data" > File icon
-#   Change the file name to match format CDI_[YYYYMMDD]_[PC|SUD].csv using the current date and the site type
-#   Change the date in the string on the lines below
-
-# Set the directory path
-folder_path <- "raw_data/"
-
-# List all the file names in the folder
-file_names <- list.files(path = folder_path)
-
-# Get the file names containing the search string -  both substrings 'CDI' and 'PC' (in any order)
-matching_files <- file_names[grepl("(?=.*CDI)(?=.*PC)", file_names, perl = TRUE)]
-pc_cdi_file <- paste0(folder_path, matching_files[1])
-
-matching_files <- file_names[grepl("(?=.*CDI)(?=.*SUD)", file_names, perl = TRUE)]
-sud_cdi_file = paste0(folder_path, matching_files[1])
-
 
 # How to deal with "Does not apply (8)"
 dna = 0 #0 makes neutral, NA makes it missing
 # Cutoff for neutral
 neutral_cutoff = 0
-# Import scoring scheme
-cdi_scoring = read.csv("public_data/cdi_scoring.csv", colClasses=c("q_num"="character"))
-# Output
+# Output, if NA, it is saved as data/current_CDI
 output_file = paste0("data/CDI_",gsub("-","",as.character(today())),".csv") # Path to output .csv
+# Should the raw data be pulled from the API? If false, the file needs to be in the raw_data folder with proper naming
+#   By default, use redcap API unless the variable is declared in the environment elsewhere
+#   Set this value to FALSE to use local files
+get_raw_from_api = ifelse(exists("get_raw_from_api"),get_raw_from_api,T)
 
 ##########
 # Import #
 ##########
 
-raw_cdi = rbind(data.frame(read.csv(sud_cdi_file), type="SUD"), 
-                data.frame(read.csv(pc_cdi_file), type="PC")) %>%
+# Import scoring scheme
+cdi_scoring = read.csv("public_data/cdi_scoring.csv", colClasses=c("q_num"="character"))
+
+# CDI Survey
+if(get_raw_from_api){
+  sud_cdi = get_redcap_report("SC", "110001")
+  pc_cdi = get_redcap_report("PC", "110006")
+} else {
+  # Get these files from REDCap and put them in the raw_data folder
+  #   In REDCap, this is "CDI Scores" under "Reports" in the sidebar
+  #   Click on "Export Data" > "CSV/Microsoft Excel (raw data)" > "Export Data" > File icon
+  # Change the file name to match format CDI_[YYYYMMDD]_[PC|SUD].csv using the current date and the site type
+  file_names = list.files(path="raw_data/", full.names=T)
+  sud_cdi = read_csv(sort(file_names[grepl("(?=.*CDI)(?=.*SUD)", file_names, perl = TRUE)], decreasing=T)[1])
+  pc_cdi = read_csv(sort(file_names[grepl("(?=.*CDI)(?=.*PC)", file_names, perl = TRUE)], decreasing=T)[1])
+}
+
+raw_cdi = bind_rows(mutate(sud_cdi, type="SUD"), 
+                    mutate(pc_cdi, type="PC")) %>%
   # Remove sites that have withdrawn
   filter(imp_support!=5) %>%
   select(-imp_support)

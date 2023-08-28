@@ -4,31 +4,35 @@ library(tidyverse)
 ############
 # Settings #
 ############
-# IMAT all items
-#   Get these files from REDCap and put them in the raw_data folder
-#     In REDCap, this is "IMAT - All Items" under "Reports" in the sidebar
-#     Click on "Export Data" > "CSV/Microsoft Excel (raw data)" > "Export Data" > File icon
-#   Change the file name to match format IMAT-all_[YYYYMMDD]_[PC|SUD].csv using the current date and the site type
-#   Change the date in the string on the lines below
-folder_path <- "raw_data/"
 
-# List all the file names in the folder
-file_names <- list.files(path = folder_path)
-
-# Get the file names containing the search string 
-matching_files <- sort(file_names[grepl("(?=.*IMAT-all)(?=.*SUD)", file_names, perl = TRUE)], decreasing=T)
-sud_imat_file <- paste0(folder_path, matching_files[1])
-
-# Get the file names containing the search string
-matching_files <- sort(file_names[grepl("(?=.*IMAT-all)(?=.*PC)", file_names, perl = TRUE)], decreasing=T)
-pc_imat_file <- paste0(folder_path, matching_files[1])
-
+# Should the raw data be pulled from the API? If false, the file needs to be in the raw_data folder with proper naming
+#   By default, use redcap API unless the variable is declared in the environment elsewhere
+#   Set this value to FALSE to use local files
+get_raw_from_api = ifelse(exists("get_raw_from_api"),get_raw_from_api,T)
 
 ##########
 # Import #
 ##########
-raw_imat = read.csv(pc_imat_file) %>%
-  bind_rows(read.csv(sud_imat_file)) %>%
+
+# IMAT all items
+if(get_raw_from_api){
+  sud_cdi = get_redcap_report("SC", "119747")
+  pc_cdi = get_redcap_report("PC", "119745")
+} else {
+  # Get these files from REDCap and put them in the raw_data folder
+  #   In REDCap, this is "IMAT - All Items" under "Reports" in the sidebar
+  #   Click on "Export Data" > "CSV/Microsoft Excel (raw data)" > "Export Data" > File icon
+  # Change the file name to match format IMAT-all_[YYYYMMDD]_[PC|SUD].csv using the current date and the site type
+  file_names = list.files(path="raw_data/", full.names=T)
+  sud_cdi = read_csv(sort(file_names[grepl("(?=.*IMAT-all)(?=.*SUD)", file_names, perl = TRUE)], decreasing=T)[1])
+  pc_cdi = read_csv(sort(file_names[grepl("(?=.*IMAT-all)(?=.*PC)", file_names, perl = TRUE)], decreasing=T)[1])
+}
+
+##########
+# Import #
+##########
+raw_imat = pc_imat %>%
+  bind_rows(sud_imat) %>%
   # Get survey date from redcap event
   mutate(date = my(substr(redcap_event_name, 1, 8))) %>%
   # Select only desired columns (no comment columns)

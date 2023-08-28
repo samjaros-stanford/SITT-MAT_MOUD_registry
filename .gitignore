@@ -9,4 +9,4 @@ raw_data/
 
 *.nb.html
 
-secrets.json
+secrets.*
