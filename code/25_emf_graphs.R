@@ -30,19 +30,39 @@ imat_dates = c("Sep-22", "Apr-23")
 # Line plot for percent patients diagnosed with OUD on MOUD
 make_MOUDplot = function(id, save=F){
   plot_data = report_data %>%
-    filter(program_id==id, variable%in%c("reaim_b1", "reaim_b4", "reaim_b4p")) %>%
+    filter(program_id==id, variable %in% c("reaim_b1", "reaim_b2", "reaim_b4", 
+                                           "reaim_b4p", "reaim_b5", "reaim_b5p")) %>%
+    # Presence of the new variable "reaim_b5p" indices this site is using the new measures
+    # If they are using the new measures, b2, b5, and b5p should be used for the graph
+    group_by(program_id) %>%
+    mutate(new_measures = any(variable=="reaim_b5p")) %>%
+    ungroup() %>%
+    mutate(graph_var = case_when(
+      new_measures & variable=="reaim_b2"  ~ "denom",
+      new_measures & variable=="reaim_b5"  ~ "numer",
+      new_measures & variable=="reaim_b5p" ~ "percent",
+      !new_measures & variable=="reaim_b1"  ~ "denom",
+      !new_measures & variable=="reaim_b4"  ~ "numer",
+      !new_measures & variable=="reaim_b4p" ~ "percent",
+      T ~ NA_character_)) %>%
+    filter(!is.na(graph_var)) %>%
+    # Pivot wider for graphing
     pivot_wider(id_cols = c(program_id, date),
-                names_from = variable,
+                names_from = graph_var,
                 values_from = value)
   
-  targetLabel_y = ifelse(plot_data[plot_data$date==max(plot_data$date),"reaim_b4p"]>75,65,85)
-  plot = ggplot(plot_data, aes(x=date, y=reaim_b4p)) +
+  targetLabel_x = max(plot_data$date)
+  targetLabel_y = ifelse(plot_data[plot_data$date==max(plot_data$date),"percent"]>75,65,85)
+  # For manual adjustment of the target label, when needed
+  #targetLabel_x = ymd("2022-10-01")
+  #targetLabel_y = 90
+  plot = ggplot(plot_data, aes(x=date, y=percent)) +
     geom_hline(yintercept=75, linetype="dashed", color=SITTMAT_colors[3]) +
-    geom_text(aes(x=max(date),y=targetLabel_y,label="SITT-MAT Target"), 
+    geom_text(aes(x=targetLabel_x,y=targetLabel_y,label="SITT-MAT Target"), 
               color=SITTMAT_colors[3], size=3, family=font, hjust=0.8) +
     geom_point(aes(color=program_id), size=3, show.legend=F) +
     geom_line(aes(color=program_id), linewidth=1, show.legend=F) +
-    geom_label(aes(label=paste0(reaim_b4, "/", reaim_b1)), size=3, family=font) +
+    geom_label(aes(label=paste0(numer, "/", denom)), size=3, family=font) +
     scale_color_manual(values=SITTMAT_colors) +
     scale_x_date(date_breaks="month", date_labels="%b-%y") +
     scale_y_continuous(breaks=seq(0,100,25), labels=function(x) paste0(x,"%"), limits=c(0,100)) +
@@ -238,6 +258,7 @@ make_imat = function(id, save=F){
 # Produce all plots
 #   If show_plots=T, it will ask for user input before showing next plot
 make_allPlots = function(id, save_plots=F, show_plots=T){
+  print(paste0("Creating plots for ", id))
   p = make_MOUDplot(id, save=save_plots)
   if(show_plots){
     print(p)
@@ -257,7 +278,8 @@ make_allPlots = function(id, save_plots=F, show_plots=T){
   if(show_plots) print(p)
 }
 # Define which sites you want to produce plots for
-programs = sort(unique(report_data$program_id))
+#programs = sort(unique(report_data$program_id))
+programs = c("id01","id15","id17","id34","id35","id44")
 # Iterate through programs & produce all plots
 for(program in programs){
   make_allPlots(program, save_plots=T, show_plots=F)
@@ -265,8 +287,9 @@ for(program in programs){
 
 
 # Produce only IMAT (for sites that don't have REAIM data)
-imat_programs = sort(unique(report_data %>% filter(startsWith(variable,"imat")) %>% pull(program_id)))
-
+#imat_programs = sort(unique(report_data %>% filter(startsWith(variable,"imat")) %>% pull(program_id)))
+imat_programs = c("id51")
 for(program in imat_programs){
+  print(paste0("Creating IMAT plot for ", program))
   make_imat(program, save=T)
 }
