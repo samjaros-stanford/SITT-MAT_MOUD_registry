@@ -258,6 +258,7 @@ make_imat = function(id, save=F){
 # Produce all plots
 #   If show_plots=T, it will ask for user input before showing next plot
 make_allPlots = function(id, save_plots=F, show_plots=T){
+  print(paste0("Creating plots for ", id))
   p = make_MOUDplot(id, save=save_plots)
   if(show_plots){
     print(p)
@@ -278,7 +279,7 @@ make_allPlots = function(id, save_plots=F, show_plots=T){
 }
 # Define which sites you want to produce plots for
 #programs = sort(unique(report_data$program_id))
-programs = c("id01","id17","id44")
+programs = c("id01","id15","id17","id34","id35","id44")
 # Iterate through programs & produce all plots
 for(program in programs){
   make_allPlots(program, save_plots=T, show_plots=F)
@@ -289,5 +290,6 @@ for(program in programs){
 #imat_programs = sort(unique(report_data %>% filter(startsWith(variable,"imat")) %>% pull(program_id)))
 imat_programs = c("id51")
 for(program in imat_programs){
+  print(paste0("Creating IMAT plot for ", program))
   make_imat(program, save=T)
 }
