@@ -1,35 +1,40 @@
-library(tidyverse)
+# TODO: Program info file needs to be rewritten with better readability
+
+
+# Load utilities
+source(here::here("code/__utils.R"))
 
 ############
 # Settings #
 ############
-# Site Info
-#   Get these files from REDCap and put them in the raw_data folder
-#     In REDCap, this is "Program Information" under "Reports" in the sidebar
-#     Click on "Export Data" > "CSV/Microsoft Excel (raw data)" > "Export Data" > File icon
-#   Change the file name to match format INFO_[YYYYMMDD]_[PC|SUD].csv using the current date and the site type
-#   Change the date in the string on the lines below
 
-# Set the directory path
-folder_path <- "raw_data/"
+# Should the raw data be pulled from the API? If false, the file needs to be in the raw_data folder with proper naming
+#   By default, use redcap API unless the variable is declared in the environment elsewhere
+#   Set this value to FALSE to use local files
+get_raw_from_api = ifelse(exists("get_raw_from_api"),get_raw_from_api,T)
 
-# List all the file names in the folder
-file_names <- list.files(path = folder_path)
+##########
+# Import #
+##########
 
-# Get the file names containing the search string
-matching_files <- file_names[grepl("(?=.*INFO)(?=.*SUD)", file_names, perl = TRUE)]
-SUD_info_file <- paste0(folder_path, matching_files[1])
-
-matching_files <- file_names[grepl("(?=.*INFO)(?=.*PC)", file_names, perl = TRUE)]
-PC_info_file = paste0(folder_path, matching_files[1])
-
-# Program info destination file
-prog_info_file = "data/program_info.rds"
+# Raw program info
+if(get_raw_from_api){
+  sud_info = get_redcap_report("SC", "112702")
+  pc_info = get_redcap_report("PC", "112703")
+} else {
+  # Get these files from REDCap and put them in the raw_data folder
+  #   In REDCap, this is "Program Information" under "Reports" in the sidebar
+  #   Click on "Export Data" > "CSV/Microsoft Excel (raw data)" > "Export Data" > File icon
+  # Change the file name to match format INFO_[YYYYMMDD]_[PC|SUD].csv using the current date and the site type
+  file_names = list.files(path="raw_data/", full.names=T)
+  sud_info = read_csv(sort(file_names[grepl("(?=.*INFO)(?=.*SUD)", file_names, perl = TRUE)], decreasing=T)[1])
+  pc_info = read_csv(sort(file_names[grepl("(?=.*INFO)(?=.*PC)", file_names, perl = TRUE)], decreasing=T)[1])
+}
 
 #######################
 # Load & Process Data #
 #######################
-raw_SUD = read_csv(SUD_info_file, show_col_types=F) %>% 
+raw_SUD = sud_info %>% 
   filter(imp_support != 5) %>%
   mutate(site_type = "SUD",
          demo_level_of_care = as.character(demo_level_of_care),
@@ -44,7 +49,7 @@ raw_SUD = read_csv(SUD_info_file, show_col_types=F) %>%
          demo_goal = factor(demo_goal, levels=c(1,2), labels=c("Start MOUD", "Expand MOUD")))
 
 # Assuming all primary cares are outpatient
-raw_PC = read_csv(PC_info_file, show_col_types=F) %>% 
+raw_PC = pc_info %>% 
   filter(imp_support != 5) %>%
   mutate(site_type="PC",
          isOutpatient = T,
@@ -57,12 +62,10 @@ raw_PC = read_csv(PC_info_file, show_col_types=F) %>%
          ),
          demo_goal = factor(demo_goal, levels=c(1,2), labels=c("Start MOUD", "Expand MOUD")))
 
-
 ##########
 # Export #
 ##########
-full_site_info = rbind(select(raw_SUD, program_id, demo_goal, site_type, care_level),
-      select(raw_PC, program_id, demo_goal, site_type, care_level))
 
-saveRDS(full_site_info,
-        file = prog_info_file)
+saveRDS(bind_rows(select(raw_SUD, program_id, demo_goal, site_type, care_level),
+                  select(raw_PC, program_id, demo_goal, site_type, care_level)), 
+        file="data/program_info.rds")

@@ -8,3 +8,5 @@ figures/
 raw_data/
 
 *.nb.html
+
+secrets.*

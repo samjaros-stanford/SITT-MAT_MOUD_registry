@@ -6,29 +6,34 @@
 ###   from Google Sheets until the new REAIM registry is complete         ###
 #############################################################################
 
-library(lubridate)
-library(stringr)
-library(tidyverse)
-
-# TODO: This file should process data from the new REAIM registry where sites give counts directly
-
 ############
 # Settings #
 ############
-# Patient registry
-#Set the directory path
-folder_path <- "raw_data/"
 
-# List all the file names in the folder
-file_names <- list.files(path = folder_path)
+# Should the raw data be pulled from the API? If false, the file needs to be in the raw_data folder with proper naming
+#   By default, use redcap API unless the variable is declared in the environment elsewhere
+#   Set this value to FALSE to use local files
+get_raw_from_api = ifelse(exists("get_raw_from_api"),get_raw_from_api,T)
 
-# Get the file names containing the search string
-matching_files <- file_names[grepl("(?=.*Registry)(?=.*SUD)", file_names, perl = TRUE)]
-SUD_registry_file <- paste0(folder_path, matching_files[1])
+##########
+# Import #
+##########
 
-matching_files <- file_names[grepl("(?=.*Registry)(?=.*PC)", file_names, perl = TRUE)]
-PC_registry_file = paste0(folder_path, matching_files[1])
+# REAIM Outcomes
+if(get_raw_from_api){
+  sud_cdi = get_redcap_report("SC", "")
+  pc_cdi = get_redcap_report("PC", "")
+} else {
+  # Get these files from REDCap and put them in the raw_data folder
+  #   In REDCap, this is "CDI Scores" under "Reports" in the sidebar
+  #   Click on "Export Data" > "CSV/Microsoft Excel (raw data)" > "Export Data" > File icon
+  # Change the file name to match format CDI_[YYYYMMDD]_[PC|SUD].csv using the current date and the site type
+  file_names = list.files(path="raw_data/", full.names=T)
+  sud_cdi = read_csv(sort(file_names[grepl("(?=.*REAIM)(?=.*SUD)", file_names, perl = TRUE)], decreasing=T)[1])
+  pc_cdi = read_csv(sort(file_names[grepl("(?=.*REAIM)(?=.*PC)", file_names, perl = TRUE)], decreasing=T)[1])
+}
 
+# TODO: This file should process data from the new REAIM registry where sites give counts directly
 
 ####################
 # Load & Prep Data #
