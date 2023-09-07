@@ -1,6 +1,6 @@
 library(extrafont)
-font_import()
-loadfonts(device="win") # NOTE: May need to change this to have it work on Mac
+#font_import()
+#loadfonts(device="win") # NOTE: May need to change this to have it work on Mac
 library(ggplot2)
 library(grid)
 library(lubridate)
