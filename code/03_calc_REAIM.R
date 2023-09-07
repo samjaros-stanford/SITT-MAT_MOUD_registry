@@ -6,6 +6,9 @@
 ###   from Google Sheets until the new REAIM registry is complete         ###
 #############################################################################
 
+# Load utilities
+source(here::here("code/__utils.R"))
+
 ############
 # Settings #
 ############
