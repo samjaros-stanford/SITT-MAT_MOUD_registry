@@ -201,7 +201,7 @@ make_imat = function(id, save=F){
   plot = ggplot(plot_data, aes(x=variable, y=value, group=date)) +
     geom_line(aes(color=date), linewidth=2, show.legend=F) +
     geom_point(aes(color=date), size=4) +
-    scale_color_manual(values=SITTMAT_colors) +
+    scale_color_manual(breaks=imat_dates, values=SITTMAT_colors) +
     scale_x_discrete(labels=~imat_labels[.x]) +
     scale_y_continuous(limits=c(1,5), breaks=1:5, labels=imat_scale_labels) +
     theme_minimal() +
@@ -236,14 +236,16 @@ make_imat = function(id, save=F){
       annotation_custom(total_text, ymin=-2.1, ymax=-1.1, xmin=8.51, xmax=9.51)
   } else {
     plot = plot +
-      annotation_custom(dim_line, ymin=.13, ymax=.13, xmin=.2, xmax=.9) +
-      annotation_custom(dim_text, ymin=.03, ymax=.03, xmin=1.5, xmax=6.5) +
-      annotation_custom(total_line, ymin=.13, ymax=.13, xmin=.5, xmax=.999) +
-      annotation_custom(total_text, ymin=.03, ymax=.03, xmin=7.51, xmax=8.51)
+      annotation_custom(dim_line, ymin=0.12, ymax=0.12, xmin=.2, xmax=.9) +
+      annotation_custom(dim_text, ymin=-0.5, ymax=0.5, xmin=1.5, xmax=6.5) +
+      annotation_custom(sub_line, ymin=0.12, ymax=0.12, xmin=.5, xmax=.999) +
+      annotation_custom(sub_text, ymin=-0.5, ymax=0.5, xmin=7.51, xmax=8.51) +
+      annotation_custom(total_line, ymin=0.12, ymax=0.12, xmin=.5, xmax=.999) +
+      annotation_custom(total_text, ymin=-0.5, ymax=0.5, xmin=8.51, xmax=9.51)
   }
   
   if(save){
-    filepath = paste0("figures/QRIR_figures_",month_for_filenames,"/", id, "/", id, "_imat_", month_for_filenames, ".png")
+    filepath = here::here(paste0("figures/QRIR_figures_",month_for_filenames,"/", id, "/", id, "_imat_", month_for_filenames, ".png"))
     ggsave(here::here(filepath), plot, width=imat_dims[1], height=imat_dims[2], units="in")
   }
   
