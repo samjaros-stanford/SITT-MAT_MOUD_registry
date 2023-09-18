@@ -47,7 +47,7 @@ summary(study_data)
 
 # Get mean question scores
 study_data %>%
-  summarize(across(cdi_03:imat_d5_6, ~mean(.x, na.rm=T)))
+  summarize(across(cdi_03:imat_d5_6, ~mean(scale(.x,center=F), na.rm=T)))
 
 # Get SDs of question scores
 study_data %>%
