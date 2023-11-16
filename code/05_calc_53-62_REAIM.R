@@ -8,6 +8,9 @@ require(readxl)
 require(tidyverse)
 require(here)
 
+# TODO: Change variable "months" to "month_year" to standardize
+# TODO: Patient id_translation should reference a file with previously stored IDs to make sure past patients keep their IDs
+
 ############
 # Settings #
 ############
@@ -27,7 +30,8 @@ raw_visits = read_excel(here::here(visit_file)) %>%
          encounter_date = "cln enc date",
          provider = prvdr,
          site_name = "svc dprtmnt") %>%
-  mutate(encounter_date = ymd(encounter_date))
+  mutate(encounter_date = ymd(encounter_date)) %>%
+  distinct()
 raw_prescriptions = read_excel(here::here(rx_file)) %>%
   rename(id_from_site = "SITT-MAT ID",
          rx_order_date = "order chartdate",
@@ -45,26 +49,31 @@ raw_prescriptions = read_excel(here::here(rx_file)) %>%
          patient_race = "race",
          patient_language = "patient lang",
          patient_sexual_orientation = "pat sex orientation") %>%
-  mutate(rx_order_date = ymd(rx_order_date))
+  mutate(rx_order_date = ymd(rx_order_date)) %>%
+  distinct()
 
 # Correct patient id's to reflect site
 site_name_id = read.csv("data/53-62_decoder.csv")
-# TODO: This should reference a file with previously stored IDs to make sure past patients keep their IDs
+
 id_translation = raw_visits %>%
+  # Get only 1 row per patient
   arrange(id_from_site, encounter_date) %>%
   group_by(id_from_site) %>%
-  mutate(visit_num = row_number()) %>%
+  filter(row_number()==1) %>%
   ungroup() %>%
-  filter(visit_num==1) %>%
+  # Join in table that maps site name to site ID
   left_join(site_name_id, by="site_name") %>%
+  # Create patient id by combining site ID and patient number (in order of encounter)
   arrange(program_id, encounter_date) %>%
   group_by(program_id) %>%
-  mutate(patient_num = row_number()) %>%
+  mutate(pr_id = paste0(str_sub(program_id, start=-2),"-",str_pad(row_number(), width=4, side="left", pad="0"))) %>%
   ungroup() %>%
-  mutate(pr_id = paste0(str_sub(program_id, start=-2),"-",str_pad(patient_num, width=4, side="left", pad="0"))) %>%
   select(id_from_site, pr_id)
 
-# Analysis data sets
+######################
+# Analysis data sets #
+######################
+# Only look at prescriptions that are valid for 
 all_prescriptions = raw_prescriptions %>%
   left_join(id_translation, by="id_from_site") %>%
   mutate(program_id = paste0("id", substr(pr_id,1,2)),
@@ -101,6 +110,8 @@ all_visits = raw_visits %>%
   replace_na(list(is_restart=F))
 
 # For study data, the patient must have been diagnosed after Sep 1 2022
+# 1) Decide on which ID's will be included in the study
+#     If they were started or restarted after Sep 1, 2022, they're eligible
 after_sep2022_ids = all_visits %>%
   filter(is_start | is_restart) %>%
   filter(encounter_date>=ymd("2022-09-01")) %>%
@@ -110,13 +121,36 @@ after_sep2022_ids = all_visits %>%
   select(pr_id, first_study_date) %>%
   ungroup()
 
+# 2) Get new prescriptions data set that only has the valid study prescriptions
+#     Any non-eligible patients' data is excluded
+#     For eligible patients, only prescriptions after the study date are included
+#     Re-calculate restarts and breaks given these new restrictions (mostly re-starts become starts)
 study_prescriptions = after_sep2022_ids %>%
   left_join(all_prescriptions, by="pr_id") %>%
-  filter(rx_order_date>=first_study_date)
+  filter(rx_order_date>=first_study_date) %>%
+  arrange(pr_id, rx_order_date) %>%
+  group_by(pr_id) %>%
+  mutate(is_restart = case_when(
+    row_number()==1 ~ F,
+    rx_order_date-lag(rx_order_date)<34 ~ F,
+    rx_order_date-lag(rx_order_date)<lag(est_rx_days)*(lag(rx_num_refills)+1) ~ F,
+    T ~ T
+  )) %>%
+  mutate(is_break = if_else(row_number()==n(), T, lead(is_restart, n=1))) %>%
+  ungroup()
 
+# 3) Get visits data set that only has valid visits
+#     Any non-eligible patients' data is excluded
+#     Only take starts or restarts after the study start date
+#     Reassign the first valid study visit to is_start
 study_visits = after_sep2022_ids %>%
   left_join(all_visits, by="pr_id") %>%
-  filter(encounter_date>=first_study_date)
+  filter(encounter_date>=first_study_date) %>%
+  arrange(pr_id, encounter_date) %>%
+  group_by(pr_id) %>%
+  mutate(is_start = row_number()==1,
+         is_restart = if_else(is_start,F,is_restart)) %>%
+  ungroup()
 
 # Get months where the patient was on MOUD as defined in the PCHS data documentation
 rx_start_stop = study_prescriptions %>%
@@ -124,22 +158,23 @@ rx_start_stop = study_prescriptions %>%
   filter(row_number()==1 | is_restart | is_break) %>%
   ungroup() %>%
   mutate(continuous_tx_id = if_else(row_number()==1 | lag(is_break) | is_restart, row_number(), lag(row_number()))) %>%
-  pivot_wider(id_cols=c(pr_id, program_id, continuous_tx_id),
-              values_from=rx_order_date,
-              names_from=is_break) %>%
-  rename(start_date = "FALSE", end_date = "TRUE") %>%
-  mutate(start_date = if_else(is.na(start_date), end_date, start_date)) %>%
+  group_by(pr_id, program_id, continuous_tx_id) %>%
+  summarize(start_date = first(rx_order_date),
+            end_date = last(rx_order_date) + last(est_rx_days),
+            .groups="keep") %>%
+  ungroup() %>%
   mutate(months=toString(unique(study_prescriptions$month_year))) %>%
   separate_rows(months, sep=", ") %>%
-  mutate(is_rx_month = my(months) %within% interval(start_date, end_date) | (ceiling_date(my(months),"month")-days(1)) %within% interval(start_date, end_date))
+  # Test if the interval month (ex. Sep 1 2022 - Sep 30 2022) overlaps with the treatment interval
+  mutate(is_rx_month = int_overlaps(interval(my(months), ceiling_date(my(months),"month")-days(1)), interval(start_date, end_date)))
 
-# Get dataset that matches each visit to the subsequent prescription
+# Given a visit_date and a patient, find the nearest prescription date after that visit
 find_nearest_rx = function(dataset, patient, visit_date){
   to_return = dataset %>%
     filter(pr_id==patient, rx_order_date >= visit_date) %>%
     filter(row_number()==1) %>%
     select(rx_order_date) %>%
-    pull
+    pull()
     
   if(length(to_return)==0)
     return(NA)
@@ -174,19 +209,20 @@ A1 = study_prescriptions %>%
 # B1: Number of new and existing patients diagnosed with OUD
 #     # OLD MEASURE #
 B1 = study_visits %>%
+  arrange(pr_id, encounter_date) %>%
   filter(row_number()==1, .by="pr_id") %>%
   select(pr_id, program_id, month_year) %>%
-  left_join(rx_start_stop %>%
-              select(pr_id, months, is_rx_month) %>%
-              filter(is_rx_month), 
-            by="pr_id") %>%
-  mutate(months = if_else(is.na(months), month_year, months)) %>%
-  group_by(program_id, months) %>%
+  bind_rows(rx_start_stop %>%
+              filter(is_rx_month) %>%
+              rename(month_year=months) %>%
+              select(pr_id, program_id, month_year)) %>%
+  distinct() %>%
+  group_by(program_id, month_year) %>%
   summarize(value = n(), .groups="keep") %>%
   ungroup() %>%
   mutate(variable = "reaim_b1") %>%
-  select(program_id, months, variable, value) %>%
-  pivot_wider(names_from = months,
+  select(program_id, month_year, variable, value) %>%
+  pivot_wider(names_from = month_year,
               values_from = value,
               values_fill = 0) %>%
   pivot_longer(cols = c(-program_id, -variable),
@@ -200,6 +236,8 @@ B1 = study_visits %>%
 #       ICD-10/DSM-5 diagnosis*
 B2 = study_visits %>%
   filter(is_start | is_restart) %>%
+  select(pr_id, program_id, month_year) %>%
+  distinct() %>%
   group_by(program_id, month_year) %>%
   summarize(value = n(), .groups="keep") %>%
   ungroup() %>%
@@ -221,6 +259,9 @@ B2 = study_visits %>%
 B4 = rx_start_stop %>%
   # Filter for only rows where the patient was taking MOUD that month
   filter(is_rx_month) %>%
+  # Get distinct patient/month combinations in case a patient has more than one continuous tx in a month
+  select(pr_id, program_id, months) %>%
+  distinct() %>%
   # Get count of patients by site * month
   group_by(program_id, months) %>%
   summarize(reaim_b4 = n(), .groups="keep") %>%
@@ -259,7 +300,7 @@ B4 = rx_start_stop %>%
 C1 = visit_rx_match %>%
   filter(is_start | is_restart) %>%
   filter(!is.na(nearest_rx)) %>%
-  filter(encounter_date-nearest_rx<=3) %>%
+  filter(nearest_rx-encounter_date<=3) %>%
   group_by(program_id, month_year) %>%
   summarize(reaim_c1_n = n(), .groups="keep") %>%
   ungroup() %>%
@@ -300,7 +341,9 @@ C1 = visit_rx_match %>%
 ##########
 
 saveRDS(rbind(A1, B1, B2, B4, C1), "data/current_53-62_reaim.rds")
-
+a = readRDS("data/current_53-62_reaim.rds") %>%
+  pivot_wider(names_from=variable) %>%
+  arrange(date, program_id)
 
 
 #####################################
