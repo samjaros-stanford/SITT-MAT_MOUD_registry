@@ -37,7 +37,8 @@ imat = readRDS(here::here("data/current_imat_item.rds")) %>%
 program_info = readRDS(here::here("data/program_info.rds"))
 
 study_data = left_join(cdi, imat, by=c("program_id", "date")) %>%
-  left_join(program_info, by="program_id")
+  left_join(program_info, by="program_id") %>%
+  filter(!(program_id %in% paste0("id",54:62)))
 ```
 
 # Summary Stats
@@ -45,9 +46,19 @@ study_data = left_join(cdi, imat, by=c("program_id", "date")) %>%
 ```{r summary_stats}
 summary(study_data)
 
+
+
 # Get mean question scores
 study_data %>%
-  summarize(across(cdi_03:imat_d5_6, ~mean(scale(.x,center=F), na.rm=T)))
+  mutate(imat_d5_6 = case_match(imat_d5_6,
+                                1 ~ 1,
+                                2 ~ 2.5,
+                                3 ~ 4,
+                                4 ~ 5.5,
+                                5 ~ 7,
+                                .default=NA)) %>%
+  summarize(across(cdi_03:imat_d5_6, list(mean=~mean(.x,, na.rm=T),
+                                          sd=~sd(.x, na.rm=T))))
 
 # Get SDs of question scores
 study_data %>%
