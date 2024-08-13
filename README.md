@@ -1,4 +1,4 @@
-Archived 8/13/2024 due to it being superseded by [samjaros-stanford/SITT-MAT[(https://github.com/samjaros-stanford/SITT-MAT).
+Archived 8/13/2024 due to it being superseded by [samjaros-stanford/SITT-MAT](https://github.com/samjaros-stanford/SITT-MAT).
 
 <a href="https://github.com/samjaros-stanford/SITT-MAT"> <img src="arch/SITT-MAT_logo.jpeg" alt="SITT-MAT Project Logo" width="120" height="120"/> </a>
 
